@@ -3,6 +3,7 @@
 
 #include "Constants.h"
 #include <iostream>
+#include <Tools/Misc.hpp>
 
 namespace Forklift
 {
@@ -10,6 +11,7 @@ namespace Forklift
 template<Model M>
 Sampler<M>::Sampler(Tools::RNG&& _rng)
 :rng(_rng)
+,threshold(2, Tools::minus_infinity)
 {
     std::cout << "Generating particles from the prior..." << std::flush;
 

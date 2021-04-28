@@ -23,6 +23,9 @@ class Sampler
         std::vector<M> particles;
         std::vector<std::vector<double>> scalars;
 
+        // Threshold
+        std::vector<double> threshold;
+
     public:
 
         // Construct with a random number generator
