@@ -6,7 +6,7 @@ using namespace Forklift;
 
 int main()
 {
-    Sampler<Example> sampler(Tools::RNG());
+    Sampler<Example> sampler{Tools::RNG()};
 
     return 0;
 }

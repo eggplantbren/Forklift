@@ -19,6 +19,10 @@ class Sampler
         // Random number generator
         Tools::RNG rng;
 
+        // Particles and their scalars
+        std::vector<M> particles;
+        std::vector<std::vector<double>> scalars;
+
     public:
 
         // Construct with a random number generator
