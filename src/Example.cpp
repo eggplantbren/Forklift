@@ -14,7 +14,7 @@ Example::Example(Tools::RNG& rng)
         value = rng.rand();
 }
 
-Example::Example(std::vector<unsigned char>&& bytes)
+Example::Example(std::vector<unsigned char> bytes)
 :params(size)
 {
     assert(sizeof(double)*size == bytes.size());

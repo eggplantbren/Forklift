@@ -16,7 +16,7 @@ class Example
     public:
         Example() = delete;
         Example(Tools::RNG& rng);
-        Example(std::vector<unsigned char>&& bytes);
+        Example(std::vector<unsigned char> bytes);
         double perturb(Tools::RNG& rng);
         std::vector<double> scalars() const;
         std::vector<unsigned char> to_bytes() const;
