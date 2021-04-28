@@ -27,6 +27,32 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
     std::cout << "done." << std::endl;
 }
 
+
+template<Model M>
+void Sampler<M>::run_to_depth(int nats)
+{
+    int iterations = nats*Constants::num_particles;
+    for(int i=0; i<iterations; ++i)
+        update();
+}
+
+
+template<Model M>
+void Sampler<M>::update()
+{
+    // Which scalar to ascend
+    int which_scalar = (stripe.size() == 0)?(0):(1);
+
+    // Find worst particle
+    int worst = 0;
+    for(int i=1; i<Constants::num_particles; ++i)
+    {
+        if(scalars[i][which_scalar] < scalars[worst][which_scalar])
+            worst = i;
+    }
+}
+
+
 } // namespace
 
 #endif
