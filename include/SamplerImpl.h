@@ -50,6 +50,10 @@ void Sampler<M>::update()
         if(scalars[i][which_scalar] < scalars[worst][which_scalar])
             worst = i;
     }
+
+    // Save it
+    database.save_particle(particles[worst].to_bytes(),
+                           scalars[worst][0], scalars[worst][1]);
 }
 
 

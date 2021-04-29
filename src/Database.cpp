@@ -47,4 +47,16 @@ CREATE TABLE IF NOT EXISTS particles\n\
 
 }
 
+int Database::save_particle
+    (const std::optional<std::vector<unsigned char>>& bytes, double f, double g)
+{
+    db << "INSERT INTO particles (params, f, g) VALUES (?, ?, ?);"
+       << bytes << f << g;
+
+    int id;
+    db << "SELECT LAST_INSERT_ROWID();" >> id;
+
+    return id;
+}
+
 } // namespace

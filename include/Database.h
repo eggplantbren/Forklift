@@ -1,7 +1,9 @@
 #ifndef Forklift_Database_h
 #define Forklift_Database_h
 
+#include <optional>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
+#include <vector>
 
 namespace Forklift
 {
@@ -21,6 +23,10 @@ class Database
     public:
         Database();
 
+        // Save a particle. Returns the rowid
+        int save_particle
+            (const std::optional<std::vector<unsigned char>>& bytes,
+             double f, double g);
 };
 
 
