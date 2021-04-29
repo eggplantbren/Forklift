@@ -1,3 +1,4 @@
 *.o
 libforklift.a
 main
+output/forklift.db*

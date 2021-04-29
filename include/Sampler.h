@@ -1,6 +1,7 @@
 #ifndef Forklift_Sampler_h
 #define Forklift_Sampler_h
 
+#include <Database.h>
 #include <Model.h>
 
 namespace Forklift
@@ -15,6 +16,9 @@ template<Model M>
 class Sampler
 {
     private:
+
+        // Database for output
+        Database database;
 
         // Random number generator
         Tools::RNG rng;
