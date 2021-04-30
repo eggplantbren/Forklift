@@ -7,7 +7,7 @@ using namespace Forklift;
 int main()
 {
     Sampler<Example> sampler{Tools::RNG()};
-    sampler.run_to_depth(100);
+    sampler.update();
 
     return 0;
 }

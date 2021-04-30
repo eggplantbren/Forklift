@@ -3,6 +3,7 @@
 
 #include <Database.h>
 #include <Model.h>
+#include <Stripe.h>
 
 namespace Forklift
 {
@@ -23,18 +24,14 @@ class Sampler
         // Random number generator
         Tools::RNG rng;
 
-        // Particles and their scalars
+        // Particles
         std::vector<M> particles;
-        std::vector<std::vector<double>> scalars;
 
-        // Stripe limits. If empty, we're producing the floor.
-        std::vector<double> stripe;
+        // Iteration counter
+        int iteration;
 
-        // Threshold
-        std::vector<double> threshold;
-
-        // Private functions
-        void update();
+        // Threshold for first scalar
+        double xstar;
 
     public:
 
@@ -42,7 +39,8 @@ class Sampler
         Sampler(Tools::RNG&& _rng);
         Sampler() = delete;
 
-        void run_to_depth(int nats);
+        // Private functions
+        void update();
 };
 
 } // namespace
