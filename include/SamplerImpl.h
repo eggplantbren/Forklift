@@ -18,7 +18,11 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
 
     particles.reserve(Constants::num_particles);
     for(int i=0; i<Constants::num_particles; ++i)
-        particles.emplace_back(M{rng});
+    {
+        M m{rng};
+        std::vector<double> s = m.scalars();
+        particles.emplace_back(std::move(m), std::move(s));
+    }
 
     std::cout << "done." << std::endl;
 }
@@ -36,8 +40,14 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
 template<Model M>
 void Sampler<M>::update()
 {
-    Stripe<M> stripe(iteration, particles, xstar);
+/*    Stripe<M> stripe(iteration, particles, xstar);*/
 
+    int stripe_iterations = Constants::num_particles
+                                        *(Constants::depth_nats - iteration);
+    for(int i=0; i<stripe_iterations; ++i)
+    {
+/*        stripe.ns_iteration(rng);*/
+    }
 
     ++iteration;
 

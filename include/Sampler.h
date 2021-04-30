@@ -4,14 +4,13 @@
 #include <Database.h>
 #include <Model.h>
 #include <Stripe.h>
+#include <tuple>
 
 namespace Forklift
 {
 
-/*
-* A Sampler is a single run of Nested Sampling,
-* either to produce the floor or a stripe.
-*/
+
+
 
 template<Model M>
 class Sampler
@@ -24,8 +23,8 @@ class Sampler
         // Random number generator
         Tools::RNG rng;
 
-        // Particles
-        std::vector<M> particles;
+        // Particles tupled with their scalars
+        std::vector<Particle<M>> particles;
 
         // Iteration counter
         int iteration;

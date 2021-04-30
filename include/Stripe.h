@@ -2,9 +2,15 @@
 #define Forklift_Stripe_h
 
 #include "Model.h"
+#include <Tools/RNG.hpp>
 
 namespace Forklift
 {
+
+
+template<Model M>
+using Particle = std::tuple<M, std::vector<double>>;
+
 
 template<Model M>
 class Stripe
@@ -25,10 +31,13 @@ class Stripe
         // No default constructor
         Stripe() = delete;
 
-        Stripe(int _stripe_id, const std::vector<M>& _particles,
+        // Constructor
+        Stripe(int _stripe_id,
+               const std::vector<Particle<M>>& _particles,
                double _xstar);
 
-
+        // Do one NS iteration
+        void ns_iteration(Tools::RNG& rng);
 };
 
 } // namespace

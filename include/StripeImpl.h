@@ -8,8 +8,10 @@ namespace Forklift
 {
 
 template<Model M>
-Stripe<M>::Stripe(int _stripe_id, const std::vector<M>& _particles,
-                  double _xstar)
+Stripe<M>::Stripe
+    (int _stripe_id,
+     const std::vector<Particle<M>>& _particles,
+     double _xstar)
 :stripe_id(_stripe_id)
 ,particles(_particles)
 ,xstar(_xstar)
@@ -19,7 +21,13 @@ Stripe<M>::Stripe(int _stripe_id, const std::vector<M>& _particles,
     std::cout << "with threshold " << xstar << '.' << std::endl;
 }
 
+template<Model M>
+void Stripe<M>::ns_iteration(Tools::RNG& rng)
+{
+    // Find worst particle
+    
 
+}
 
 } // namespace
 
