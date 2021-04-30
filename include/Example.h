@@ -18,7 +18,8 @@ class Example
         Example(Tools::RNG& rng);
         Example(std::vector<unsigned char> bytes);
         double perturb(Tools::RNG& rng);
-        std::vector<double> scalars() const;
+        double x() const;
+        double y() const;
         std::vector<unsigned char> to_bytes() const;
 };
 

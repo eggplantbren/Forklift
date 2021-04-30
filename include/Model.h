@@ -22,7 +22,8 @@ concept Model = requires(Tools::RNG& rng)
 }
 && requires(const M& m)
 {
-    { m.scalars() } -> std::convertible_to<std::vector<double>>;
+    { m.x() } -> std::convertible_to<double>;
+    { m.y() } -> std::convertible_to<double>;
     { m.to_bytes() } -> std::convertible_to<std::vector<unsigned char>>;
 }
 && requires(M& m, Tools::RNG& rng)

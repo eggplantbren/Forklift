@@ -25,8 +25,9 @@ class Database
 
         // Save a particle. Returns the rowid
         int save_particle
-            (const std::optional<std::vector<unsigned char>>& bytes,
-             double f, double g);
+            (int stripe_id, int iteration,
+             const std::optional<std::vector<unsigned char>>& bytes,
+             double x, double y);
 };
 
 

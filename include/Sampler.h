@@ -9,9 +9,6 @@
 namespace Forklift
 {
 
-
-
-
 template<Model M>
 class Sampler
 {
@@ -24,7 +21,7 @@ class Sampler
         Tools::RNG rng;
 
         // Particles tupled with their scalars
-        std::vector<Particle<M>> particles;
+        std::vector<M> particles;
 
         // Iteration counter
         int iteration;

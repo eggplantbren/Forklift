@@ -29,19 +29,22 @@ double Example::perturb(Tools::RNG& rng)
     return 0.0;
 }
 
-std::vector<double> Example::scalars() const
+double Example::x() const
 {
-    double x = 0.0;
-    double y = 0.0;
-
+    double f = 0.0;
     for(double value: params)
-    {
-        x += -0.5*1E4*pow(value - 0.5, 2);
-        y += -1E2*value;
-    }
-
-    return {x, y};
+        f += -0.5*1E4*pow(value - 0.5, 2);
+    return f;
 }
+
+double Example::y() const
+{
+    double g = 0.0;
+    for(double value: params)
+        g += -1E2*value;
+    return g;
+}
+
 
 std::vector<unsigned char> Example::to_bytes() const
 {

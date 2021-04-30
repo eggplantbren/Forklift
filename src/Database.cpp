@@ -40,18 +40,23 @@ void Database::create_tables()
 {
     db << "\n\
 CREATE TABLE IF NOT EXISTS particles\n\
-(id     INTEGER NOT NULL PRIMARY KEY,\n\
+(stripe_id INTEGER NOT NULL,\n\
+ iteration INTEGER NOT NULL,\n\
  params BLOB,\n\
- f      REAL NOT NULL,\n\
- g      REAL NOT NULL);";
+ x      REAL NOT NULL,\n\
+ y      REAL NOT NULL,\n\
+ PRIMARY KEY (stripe_id, iteration))\n\
+WITHOUT ROWID;";
 
 }
 
 int Database::save_particle
-    (const std::optional<std::vector<unsigned char>>& bytes, double f, double g)
+    (int stripe_id, int iteration,
+     const std::optional<std::vector<unsigned char>>& bytes,
+     double x, double y)
 {
-    db << "INSERT INTO particles (params, f, g) VALUES (?, ?, ?);"
-       << bytes << f << g;
+    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?);"
+       << stripe_id << iteration << bytes << x << y;
 
     int id;
     db << "SELECT LAST_INSERT_ROWID();" >> id;
