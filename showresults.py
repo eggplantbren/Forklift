@@ -50,14 +50,16 @@ class Results:
         plt.plot(self.xs, self.ys, ".", markersize=1, alpha=0.3)
         plt.show()
 
-    def compute_logz(self, temperatures):
+    def logz_and_info(self, temperatures):
         Tx, Ty = temperatures
-        return logsumexp(self.logws + self.xs/Tx + self.ys/Ty)
+        logls = self.xs/Tx + self.ys/Ty
+        logz = logsumexp(self.logws + logls)
+        info = np.sum(np.exp(self.logws + logls - logz)*(logls - logz))
+        return dict(logz=logz, info=info)
 
 
 results = Results()
-logz = results.compute_logz((20.0, 1.0))
-print(f"logz(20, 1) = {logz}. True value = -843.7673103203256.")
+print(results.logz_and_info((20.0, 1.0)))
 
 
 results.plot_scalars()
