@@ -64,4 +64,10 @@ int Database::save_particle
     return id;
 }
 
+
+void Database::clear_above(double xstar)
+{
+    db << "DELETE FROM particles WHERE x > ?;" << xstar;
+}
+
 } // namespace

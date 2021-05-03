@@ -28,6 +28,9 @@ class Database
             (int stripe_id, int iteration,
              const std::optional<std::vector<unsigned char>>& bytes,
              double x, double y);
+
+        // Delete some particles
+        void clear_above(double xstar);
 };
 
 

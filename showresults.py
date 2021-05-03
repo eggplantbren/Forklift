@@ -10,5 +10,5 @@ for row in db.execute("SELECT x, y FROM particles;"):
     ys.append(row[1])
 
 
-plt.plot(xs, ys, ".", alpha=0.3)
+plt.plot(xs, ys, ".", markersize=1, alpha=0.3)
 plt.show()

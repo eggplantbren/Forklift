@@ -26,7 +26,7 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
         particles.emplace_back(std::move(m));
     }
 
-    std::cout << "done." << std::endl;
+    std::cout << "done.\n" << std::endl;
 }
 
 
@@ -36,7 +36,7 @@ void Sampler<M>::update()
     // Create stripe and ascend
     Stripe<M> stripe(stripe_id, particles, xstar);
     int stripe_iterations = Constants::num_particles
-                                        *(Constants::depth_nats - iteration);
+                                        *(Constants::depth_nats - stripe_id);
     for(int i=0; i<stripe_iterations; ++i)
         stripe.ns_iteration(database, rng);
 
@@ -45,20 +45,8 @@ void Sampler<M>::update()
     for(int i=0; i<Constants::num_particles; ++i)
         ns_iteration();
 
-/*    // Which scalar to ascend*/
-/*    int which_scalar = (stripe.size() == 0)?(0):(1);*/
-
-/*    // Find worst particle*/
-/*    int worst = 0;*/
-/*    for(int i=1; i<Constants::num_particles; ++i)*/
-/*    {*/
-/*        if(scalars[i][which_scalar] < scalars[worst][which_scalar])*/
-/*            worst = i;*/
-/*    }*/
-
-/*    // Save it*/
-/*    database.save_particle(particles[worst].to_bytes(),*/
-/*                           scalars[worst][0], scalars[worst][1]);*/
+    // Clear out particles
+    database.clear_above(xstar);
 }
 
 
@@ -78,16 +66,9 @@ void Sampler<M>::ns_iteration()
             worst = i;
     }
 
-/*    // Save worst particle*/
-/*    database.save_particle(stripe_id, iteration, particles[worst].to_bytes(),*/
-/*                           particles[worst].x(), ys[worst]);*/
-
     // Update threshold
     xstar = xs[worst];
     std::cout << "Threshold = " << xstar << '.' << std::endl;
-
-/*    std::cout << "Saved particle. Threshold updated to (";*/
-/*    std::cout << xstar << ", " << ystar << ")." << std::endl;*/
 
     std::cout << "Replacing particle..." << std::flush;
 
@@ -131,7 +112,6 @@ void Sampler<M>::ns_iteration()
     std::cout << "Accepted " << accepted << '/' << Constants::mcmc_steps << ' ';
     std::cout << "proposals.\n" << std::endl;
 }
-
 
 
 } // namespace

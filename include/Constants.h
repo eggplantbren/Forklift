@@ -6,7 +6,7 @@ namespace Forklift
 
 namespace Constants
 {
-    static constexpr int num_particles = 1000;
+    static constexpr int num_particles = 100;
     static constexpr int mcmc_steps = 1000;
     static constexpr int depth_nats = 100;
 
