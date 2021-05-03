@@ -44,7 +44,11 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     }
 
     // Save worst particle
-    database.save_particle(stripe_id, iteration, particles[worst].to_bytes(),
+    std::optional<std::vector<unsigned char>> bytes;
+    if(rng.rand() <= Constants::thin)
+        bytes = particles[worst].to_bytes();
+
+    database.save_particle(stripe_id, iteration, bytes,
                            particles[worst].x(), ys[worst]);
 
     // Update threshold
