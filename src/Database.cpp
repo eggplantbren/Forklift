@@ -34,10 +34,21 @@ void Database::commit()
 void Database::drop_tables()
 {
     db << "DROP TABLE IF EXISTS particles;";
+    db << "DROP TABLE IF EXISTS constants;";
 }
 
 void Database::create_tables()
 {
+    db << "\n\
+CREATE TABLE IF NOT EXISTS constants\n\
+(id            INTEGER NOT NULL PRIMARY KEY,\n\
+ num_particles INTEGER NOT NULL,\n\
+ mcmc_steps    INTEGER NOT NULL);";
+
+    db << "INSERT OR IGNORE INTO constants VALUES (1, ?, ?);"
+       << Constants::num_particles << Constants::mcmc_steps;
+
+
     db << "\n\
 CREATE TABLE IF NOT EXISTS particles\n\
 (stripe_id INTEGER NOT NULL,\n\
