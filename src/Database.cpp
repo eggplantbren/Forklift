@@ -33,6 +33,7 @@ void Database::commit()
 
 void Database::drop_tables()
 {
+    db << "DROP INDEX IF EXISTS stripe_id_idx;";
     db << "DROP TABLE IF EXISTS particles;";
     db << "DROP TABLE IF EXISTS constants;";
 }
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS particles\n\
  PRIMARY KEY (stripe_id, iteration))\n\
 WITHOUT ROWID;";
 
+    db << "CREATE INDEX IF NOT EXISTS stripe_id_idx ON particles (stripe_id);";
 }
 
 int Database::save_particle
