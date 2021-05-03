@@ -20,14 +20,18 @@ class Sampler
         // Random number generator
         Tools::RNG rng;
 
-        // Particles tupled with their scalars
+        // Particles with their scalars
         std::vector<M> particles;
+        std::vector<double> xs;
 
         // Iteration counter
-        int iteration;
+        int stripe_id, iteration;
 
         // Threshold for first scalar
         double xstar;
+
+        // Do one NS iteration wrt x
+        void ns_iteration();
 
     public:
 

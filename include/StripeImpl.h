@@ -97,7 +97,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 
     std::cout << "done. ";
     std::cout << "Accepted " << accepted << '/' << Constants::mcmc_steps << ' ';
-    std::cout << "proposals." << std::endl;
+    std::cout << "proposals.\n" << std::endl;
 }
 
 } // namespace

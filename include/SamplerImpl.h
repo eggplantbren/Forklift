@@ -11,41 +11,39 @@ namespace Forklift
 template<Model M>
 Sampler<M>::Sampler(Tools::RNG&& _rng)
 :rng(_rng)
+,stripe_id(0)
 ,iteration(0)
 ,xstar(Tools::minus_infinity)
 {
     std::cout << "Generating particles from the prior..." << std::flush;
 
     particles.reserve(Constants::num_particles);
+    xs.reserve(Constants::num_particles);
     for(int i=0; i<Constants::num_particles; ++i)
-        particles.emplace_back(M{rng});
+    {
+        M m{rng};
+        xs.emplace_back(m.x());
+        particles.emplace_back(std::move(m));
+    }
 
     std::cout << "done." << std::endl;
 }
 
 
-/*template<Model M>*/
-/*void Sampler<M>::run_to_depth(int nats)*/
-/*{*/
-/*    int iterations = nats*Constants::num_particles;*/
-/*    for(int i=0; i<iterations; ++i)*/
-/*        update();*/
-/*}*/
-
-
 template<Model M>
 void Sampler<M>::update()
 {
-    Stripe<M> stripe(iteration, particles, xstar);
-
+    // Create stripe and ascend
+    Stripe<M> stripe(stripe_id, particles, xstar);
     int stripe_iterations = Constants::num_particles
                                         *(Constants::depth_nats - iteration);
     for(int i=0; i<stripe_iterations; ++i)
-    {
         stripe.ns_iteration(database, rng);
-    }
 
-    ++iteration;
+    ++stripe_id;
+
+    for(int i=0; i<Constants::num_particles; ++i)
+        ns_iteration();
 
 /*    // Which scalar to ascend*/
 /*    int which_scalar = (stripe.size() == 0)?(0):(1);*/
@@ -62,6 +60,78 @@ void Sampler<M>::update()
 /*    database.save_particle(particles[worst].to_bytes(),*/
 /*                           scalars[worst][0], scalars[worst][1]);*/
 }
+
+
+
+template<Model M>
+void Sampler<M>::ns_iteration()
+{
+    ++iteration;
+
+    std::cout << "Floor iteration " << iteration << '.' << std::endl;
+
+    // Find worst particle
+    int worst = 0;
+    for(int i=1; i<int(particles.size()); ++i)
+    {
+        if(xs[i] < xs[worst])
+            worst = i;
+    }
+
+/*    // Save worst particle*/
+/*    database.save_particle(stripe_id, iteration, particles[worst].to_bytes(),*/
+/*                           particles[worst].x(), ys[worst]);*/
+
+    // Update threshold
+    xstar = xs[worst];
+    std::cout << "Threshold = " << xstar << '.' << std::endl;
+
+/*    std::cout << "Saved particle. Threshold updated to (";*/
+/*    std::cout << xstar << ", " << ystar << ")." << std::endl;*/
+
+    std::cout << "Replacing particle..." << std::flush;
+
+    // Clone survivor
+    if(particles.size() > 1)
+    {
+        int copy;
+        while(true)
+        {
+            copy = rng.rand_int(particles.size());
+            if(copy != worst)
+                break;
+        }
+
+        particles[worst] = particles[copy];
+        xs[worst] = xs[copy];
+    }
+
+    // Do MCMC
+    int& k = worst;
+
+    int accepted = 0;
+    for(int i=0; i<Constants::mcmc_steps; ++i)
+    {
+        M proposal = particles[k];
+        double logh = proposal.perturb(rng);
+
+        if(rng.rand() <= exp(logh))
+        {
+            double x = proposal.x();
+            if(x >= xstar)
+            {
+                particles[k] = proposal;
+                xs[k] = x;
+                ++accepted;
+            }
+        }
+    }
+
+    std::cout << "done. ";
+    std::cout << "Accepted " << accepted << '/' << Constants::mcmc_steps << ' ';
+    std::cout << "proposals.\n" << std::endl;
+}
+
 
 
 } // namespace
