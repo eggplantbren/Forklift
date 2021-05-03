@@ -1,5 +1,5 @@
 CXX = g++
-FLAGS = -std=c++20 -O2 -g -I . -I include -Wall -Wextra -pedantic
+FLAGS = -std=c++20 -O3 -march=native -I . -I include -Wall -Wextra -pedantic
 
 default:
 	$(CXX) $(FLAGS) -c src/Database.cpp
