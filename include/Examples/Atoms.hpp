@@ -105,9 +105,13 @@ double Atoms::y() const
 double Atoms::x() const
 {
     double tot = 0.0;
-    for(double y: ys)
-        tot += y;
-    return -tot;
+    double rsq;
+    for(int i=0; i<num_atoms; ++i)
+    {
+        rsq = pow(xs[i] - 0.5, 2) + pow(ys[i] - 0.5, 2);
+        tot += -0.5*rsq;
+    }
+    return tot;
 }
 
 std::vector<unsigned char> Atoms::to_bytes() const
