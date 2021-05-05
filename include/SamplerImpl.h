@@ -36,7 +36,7 @@ void Sampler<M>::update()
     // Create stripe and ascend
     Stripe<M> stripe(stripe_id, particles, xstar);
     int stripe_iterations = Constants::num_particles
-                                        *(Constants::depth_nats - stripe_id);
+                                        *(Constants::depth_nats - 0); //stripe_id);
     for(int i=0; i<stripe_iterations; ++i)
         stripe.ns_iteration(database, rng);
 
