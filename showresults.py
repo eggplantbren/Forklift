@@ -9,19 +9,20 @@ def logsumexp(xs):
     return np.log(np.sum(np.exp(xs - top))) + top
 
 
-@numba.njit("float64[:,:, :](float64[:], float64[:], float64[:], float64[:], int64, boolean)")
+@numba.njit("float64[:,:,:](float64[:], float64[:], float64[:], float64[:], int64, boolean)")
 def _canonical_grid(limits, xs, ys, logws, num, resid):
     """
     Compute canonical distributions on a grid
     """
     Tx = np.exp(np.linspace(np.log(limits[0]), np.log(limits[1]), num))
     Ty = np.exp(np.linspace(np.log(limits[2]), np.log(limits[3]), num))[::-1]
-    logzs_infos = np.empty((2, num, num))
+    logzs_infos = np.empty((4, num, num))
     for i in range(num):
         for j in range(num):
             logls = xs/Tx[j] + ys/Ty[i]
             logz = logsumexp(logws + logls)
-            info = np.sum(np.exp(logws + logls - logz)*(logls - logz))
+            ps = np.exp(logws + logls - logz)
+            info = np.sum(ps*(logls - logz))
             if resid:
                 x = np.linspace(0.0, 1.0, 20001)
                 y = np.exp(-0.5*1E4*(x - 0.5)**2/Tx[j] - 1E2*x/Ty[i])
@@ -30,6 +31,8 @@ def _canonical_grid(limits, xs, ys, logws, num, resid):
                 info -= 20.0*np.trapz(p*np.log(p + 1E-300), x=x)
             logzs_infos[0, i, j] = logz
             logzs_infos[1, i, j] = info
+            logzs_infos[2, i, j] = np.sum(ps*xs)
+            logzs_infos[3, i, j] = np.sum(ps*ys)
         print("Finished row", str(i+1))
     return logzs_infos
 
@@ -106,16 +109,26 @@ extent = np.log10(limits)
 extent += np.array([-0.5*dx, 0.5*dx, -0.5*dy, 0.5*dy])
 cmap = "coolwarm" if resid else "viridis"
 
-plt.subplot(1, 2, 1)
+plt.figure(figsize=(8, 8))
+plt.subplot(2, 2, 1)
 plt.imshow(logzs_infos[0, :, :], extent=extent, cmap=cmap)
-plt.xlabel("$\\log_{10} T_x$")
-plt.ylabel("$\\log_{10} T_y$")
+plt.ylabel("$\\log_{10}\\left(T_y\\right)$")
 plt.title("$\\log Z$")
 
-plt.subplot(1, 2, 2)
+plt.subplot(2, 2, 2)
 plt.imshow(logzs_infos[1, :, :], extent=extent, cmap=cmap)
-plt.xlabel("$\\log_{10} T_x$")
 plt.title("$H$")
+
+plt.subplot(2, 2, 3)
+plt.imshow(logzs_infos[2, :, :], extent=extent)
+plt.xlabel("$\\log_{10}\\left(T_x\\right)$")
+plt.ylabel("$\\log_{10}\\left(T_y\\right)$")
+plt.title("$<f>$")
+
+plt.subplot(2, 2, 4)
+plt.imshow(logzs_infos[3, :, :], extent=extent, cmap=cmap)
+plt.xlabel("$\\log_{10}\\left(T_x\\right)$")
+plt.title("$<g>$")
 
 plt.show()
 
