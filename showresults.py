@@ -9,24 +9,23 @@ def logsumexp(xs):
     return np.log(np.sum(np.exp(xs - top))) + top
 
 
-@numba.njit("float64[:,:](float64[:], float64[:], float64[:], float64[:], int64)")
-def _canonical_grid(limits, xs, ys, logws, num=31):
+@numba.njit("float64[:,:, :](float64[:], float64[:], float64[:], float64[:], int64)")
+def _canonical_grid(limits, xs, ys, logws, num):
     """
     Compute canonical distributions on a grid
     """
     Tx = np.exp(np.linspace(np.log(limits[0]), np.log(limits[1]), num))
     Ty = np.exp(np.linspace(np.log(limits[2]), np.log(limits[3]), num))
-    logzs = np.empty((num, num))
-    infos = np.empty((num, num))
+    logzs_infos = np.empty((2, num, num))
     for i in range(num):
         for j in range(num):
             logls = xs/Tx[j] + ys/Ty[i]
             logz = logsumexp(logws + logls)
             info = np.sum(np.exp(logws + logls - logz)*(logls - logz))
-            logzs[i, j] = logz
-            infos[i, j] = info
+            logzs_infos[0, i, j] = logz
+            logzs_infos[1, i, j] = info
         print("Finished row", str(i+1))
-    return logzs
+    return logzs_infos
 
 
 class Results:
@@ -78,7 +77,7 @@ class Results:
         info = np.sum(np.exp(self.logws + logls - logz)*(logls - logz))
         return dict(logz=logz, info=info)
 
-    def canonical_grid(self, limits, num=51):
+    def canonical_grid(self, limits, num=31):
         return _canonical_grid(np.array(limits),
                                self.xs, self.ys, self.logws, num)
 
@@ -88,7 +87,27 @@ print(results.logz_and_info((20.0, 1.0)))
 
 results.plot_scalars()
 
-logzs = results.canonical_grid([1.0, 100.0, 1.0, 100.0])
-plt.imshow(logzs)
+# Extent for canonical distributions
+limits = [1.0, 100.0, 1.0, 100.0]
+num = 31
+logzs_infos = results.canonical_grid(limits, num)
+
+# Extent for plotting
+dx = (np.log10(limits[1]) - np.log10(limits[0]))/(num - 1)
+dy = (np.log10(limits[3]) - np.log10(limits[2]))/(num - 1)
+extent = np.log10(limits)
+extent += np.array([-0.5*dx, 0.5*dx, -0.5*dy, 0.5*dy])
+
+plt.subplot(1, 2, 1)
+plt.imshow(logzs_infos[0, :, :])
+plt.xlabel("$\\log_{10} T_x$")
+plt.ylabel("$\\log_{10} T_x$")
+plt.title("$\\log Z$")
+
+plt.subplot(1, 2, 2)
+plt.imshow(logzs_infos[1, :, :])
+plt.xlabel("$\\log_{10} T_x$")
+plt.title("$H$")
+
 plt.show()
 
