@@ -2,3 +2,5 @@
 libforklift.a
 main
 output/forklift.db*
+output/*.mp4
+output/*.png

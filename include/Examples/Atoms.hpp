@@ -16,8 +16,8 @@ namespace Examples
 class Atoms
 {
     private:
-        static constexpr int num_atoms = 100;
-        static constexpr double sigma = 0.01;
+        static constexpr int num_atoms = 20;
+        static constexpr double sigma = 0.1;
         static constexpr double sigmasq = sigma*sigma;
 
         std::vector<double> xs, ys;
@@ -62,7 +62,7 @@ double Atoms::term(int i, int j) const
 {
     assert(j < i);
     double rsq = pow(xs[i] - xs[j], 2) + pow(ys[i] - ys[j], 2);
-    return pow(rsq/sigmasq, -6) - pow(rsq/sigmasq, -3);
+    return -(pow(rsq/sigmasq, -6) - pow(rsq/sigmasq, -3));
 }
 
 Atoms::Atoms(std::vector<unsigned char> bytes)
@@ -93,7 +93,7 @@ double Atoms::perturb(Tools::RNG& rng)
     return 0.0;
 }
 
-double Atoms::x() const
+double Atoms::y() const
 {
     double tot = 0.0;
     for(const auto& vec: terms)
@@ -102,12 +102,12 @@ double Atoms::x() const
     return tot;
 }
 
-double Atoms::y() const
+double Atoms::x() const
 {
     double tot = 0.0;
     for(double y: ys)
         tot += y;
-    return tot;
+    return -tot;
 }
 
 std::vector<unsigned char> Atoms::to_bytes() const
