@@ -9,8 +9,8 @@ def logsumexp(xs):
     return np.log(np.sum(np.exp(xs - top))) + top
 
 
-@numba.njit("float64[:,:, :](float64[:], float64[:], float64[:], float64[:], int64)")
-def _canonical_grid(limits, xs, ys, logws, num):
+@numba.njit("float64[:,:, :](float64[:], float64[:], float64[:], float64[:], int64, boolean)")
+def _canonical_grid(limits, xs, ys, logws, num, resid):
     """
     Compute canonical distributions on a grid
     """
@@ -22,6 +22,12 @@ def _canonical_grid(limits, xs, ys, logws, num):
             logls = xs/Tx[j] + ys/Ty[i]
             logz = logsumexp(logws + logls)
             info = np.sum(np.exp(logws + logls - logz)*(logls - logz))
+            if resid:
+                x = np.linspace(0.0, 1.0, 20001)
+                y = np.exp(-0.5*1E4*(x - 0.5)**2/Tx[j] - 1E2*x/Ty[i])
+                p = y/np.trapz(y, x=x)
+                logz -= 20.0*np.log(np.trapz(y, x=x))
+                info -= 20.0*np.trapz(p*np.log(p + 1E-300), x=x)
             logzs_infos[0, i, j] = logz
             logzs_infos[1, i, j] = info
         print("Finished row", str(i+1))
@@ -77,9 +83,9 @@ class Results:
         info = np.sum(np.exp(self.logws + logls - logz)*(logls - logz))
         return dict(logz=logz, info=info)
 
-    def canonical_grid(self, limits, num=31):
+    def canonical_grid(self, limits, num=31, resid=False):
         return _canonical_grid(np.array(limits),
-                               self.xs, self.ys, self.logws, num)
+                               self.xs, self.ys, self.logws, num, resid)
 
 
 results = Results()
@@ -90,22 +96,24 @@ results.plot_scalars()
 # Extent for canonical distributions
 limits = [1.0, 100.0, 1.0, 100.0]
 num = 31
-logzs_infos = results.canonical_grid(limits, num)
+resid = False
+logzs_infos = results.canonical_grid(limits, num, resid)
 
 # Extent for plotting
 dx = (np.log10(limits[1]) - np.log10(limits[0]))/(num - 1)
 dy = (np.log10(limits[3]) - np.log10(limits[2]))/(num - 1)
 extent = np.log10(limits)
 extent += np.array([-0.5*dx, 0.5*dx, -0.5*dy, 0.5*dy])
+cmap = "coolwarm" if resid else "viridis"
 
 plt.subplot(1, 2, 1)
-plt.imshow(logzs_infos[0, :, :], extent=extent)
+plt.imshow(logzs_infos[0, :, :], extent=extent, cmap=cmap)
 plt.xlabel("$\\log_{10} T_x$")
 plt.ylabel("$\\log_{10} T_y$")
 plt.title("$\\log Z$")
 
 plt.subplot(1, 2, 2)
-plt.imshow(logzs_infos[1, :, :], extent=extent)
+plt.imshow(logzs_infos[1, :, :], extent=extent, cmap=cmap)
 plt.xlabel("$\\log_{10} T_x$")
 plt.title("$H$")
 
