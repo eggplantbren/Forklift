@@ -15,7 +15,7 @@ def _canonical_grid(limits, xs, ys, logws, num):
     Compute canonical distributions on a grid
     """
     Tx = np.exp(np.linspace(np.log(limits[0]), np.log(limits[1]), num))
-    Ty = np.exp(np.linspace(np.log(limits[2]), np.log(limits[3]), num))
+    Ty = np.exp(np.linspace(np.log(limits[2]), np.log(limits[3]), num))[::-1]
     logzs_infos = np.empty((2, num, num))
     for i in range(num):
         for j in range(num):
@@ -99,13 +99,13 @@ extent = np.log10(limits)
 extent += np.array([-0.5*dx, 0.5*dx, -0.5*dy, 0.5*dy])
 
 plt.subplot(1, 2, 1)
-plt.imshow(logzs_infos[0, :, :])
+plt.imshow(logzs_infos[0, :, :], extent=extent)
 plt.xlabel("$\\log_{10} T_x$")
-plt.ylabel("$\\log_{10} T_x$")
+plt.ylabel("$\\log_{10} T_y$")
 plt.title("$\\log Z$")
 
 plt.subplot(1, 2, 2)
-plt.imshow(logzs_infos[1, :, :])
+plt.imshow(logzs_infos[1, :, :], extent=extent)
 plt.xlabel("$\\log_{10} T_x$")
 plt.title("$H$")
 
