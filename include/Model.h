@@ -16,10 +16,6 @@ concept Model = requires(Tools::RNG& rng)
 {
     { M{rng} };
 }
-&& requires(std::vector<unsigned char> bytes)
-{
-    { M{bytes} };
-}
 && requires(const M& m)
 {
     { m.x() } -> std::convertible_to<double>;
