@@ -88,6 +88,10 @@ class Results:
         self.logws, self.xs, self.ys = logws, xs, ys
 
     def plot_scalars(self):
+        if len(self.xs) > 1E6:
+            print("Skipping plot because there are too many points.")
+            return
+
         plt.plot(self.xs, self.ys, ".", markersize=1, alpha=0.3)
         plt.show()
 
