@@ -27,7 +27,6 @@ class Atoms
     public:
         Atoms() = delete;
         Atoms(Tools::RNG& rng);
-        Atoms(std::vector<unsigned char> bytes);
         double perturb(Tools::RNG& rng);
         double x() const;
         double y() const;
@@ -63,14 +62,6 @@ double Atoms::term(int i, int j) const
     assert(j < i);
     double rsq = pow(xs[i] - xs[j], 2) + pow(ys[i] - ys[j], 2);
     return -(pow(rsq/sigmasq, -6) - pow(rsq/sigmasq, -3));
-}
-
-Atoms::Atoms(std::vector<unsigned char> bytes)
-:xs(num_atoms)
-,ys(num_atoms)
-,terms(num_atoms)
-{
-     std::cerr << "NOT IMPLEMENTED." << std::endl;
 }
 
 double Atoms::perturb(Tools::RNG& rng)
