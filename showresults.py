@@ -2,12 +2,15 @@ import apsw
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
+import numpy.random as rng
 
 @numba.njit("float64(float64[:])")
 def logsumexp(xs):
     top = np.max(xs)
     return np.log(np.sum(np.exp(xs - top))) + top
 
+
+MAX_LOAD_SIZE = 20000000
 
 @numba.njit("float64[:,:,:](float64[:], float64[:], float64[:], float64[:], int64, boolean)")
 def _canonical_grid(limits, xs, ys, logws, num, resid):
@@ -49,6 +52,12 @@ class Results:
         self.conn.close()
 
     def load_scalars(self):
+        size = self.db.execute("SELECT COUNT(*) FROM particles;")\
+                                .fetchone()[0]
+        thin = 1.0
+        if size > MAX_LOAD_SIZE:
+            thin = MAX_LOAD_SIZE / size
+
         self.num_particles = self.db.execute("SELECT num_particles\
                                               FROM constants;")\
                                                 .fetchone()[0]
@@ -59,10 +68,13 @@ class Results:
                                     ORDER BY stripe_id ASC;"):
             stripe_id = row[0]
             print(f"Processing stripe {stripe_id}...", end="", flush=True)
-            data = self.db2.execute("SELECT iteration, x, y\
+            data = []
+            for row in self.db2.execute("SELECT iteration, x, y\
                                      FROM particles\
                                      WHERE stripe_id = ?;",
-                                    (stripe_id, )).fetchall()
+                                    (stripe_id, )):
+                if thin >= 1.0 or rng.rand() <= thin:
+                    data.append(row)
             data = np.array(data)
             stripe_lpm = np.log(1.0 - np.exp(-1.0)) - stripe_id
             lpms = -data[:,0]/self.num_particles
@@ -98,7 +110,7 @@ results.plot_scalars()
 
 # Extent for canonical distributions
 limits = [1.0, 100.0, 1.0, 100.0]
-num = 31
+num = 51
 resid = False
 logzs_infos = results.canonical_grid(limits, num, resid)
 
