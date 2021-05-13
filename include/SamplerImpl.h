@@ -102,11 +102,12 @@ void Sampler<M>::ns_iteration()
         if(rng.rand() <= exp(logh))
         {
             Double x = {proposal.x(), xs[k].get_tiebreaker(), rng};
+            Double y = {proposal.y(), ys[k].get_tiebreaker(), rng};
             if(x >= xstar)
             {
                 particles[k] = proposal;
                 xs[k] = x;
-                ys[k] = {proposal.y(), rng};
+                ys[k] = y;
                 ++accepted;
             }
         }

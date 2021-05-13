@@ -88,16 +88,13 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
         if(rng.rand() <= exp(logh))
         {
             Double x = {proposal.x(), xs[k].get_tiebreaker(), rng};
-            if(x >= xstar)
+            Double y = {proposal.y(), ys[k].get_tiebreaker(), rng};
+            if(x >= xstar && y >= ystar)
             {
-                Double y = {proposal.y(), ys[k].get_tiebreaker(), rng};
-                if(y >= ystar)
-                {
-                    particles[k] = proposal;
-                    xs[k] = x;
-                    ys[k] = y;
-                    ++accepted;
-                }
+                particles[k] = proposal;
+                xs[k] = x;
+                ys[k] = y;
+                ++accepted;
             }
         }
     }
