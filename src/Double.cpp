@@ -48,7 +48,7 @@ bool Double::operator < (const Double& other) const
 
 bool Double::operator >= (const Double& other) const
 {
-    return !(other < *this);
+    return !(*this < other);
 }
 
 
