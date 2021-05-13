@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS particles\n\
  params BLOB,\n\
  x      REAL NOT NULL,\n\
  y      REAL NOT NULL,\n\
+ xtb    REAL NOT NULL,\n\
+ ytb    REAL NOT NULL,\n\
  PRIMARY KEY (stripe_id, iteration))\n\
 WITHOUT ROWID;";
 
@@ -66,10 +68,11 @@ WITHOUT ROWID;";
 int Database::save_particle
     (int stripe_id, int iteration,
      const std::optional<std::vector<unsigned char>>& bytes,
-     double x, double y)
+     const Double& x, const Double& y)
 {
-    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?);"
-       << stripe_id << iteration << bytes << x << y;
+    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?);"
+       << stripe_id << iteration << bytes << x.get_value() << y.get_value()
+       << x.get_tiebreaker() << y.get_tiebreaker();
 
     int id;
     db << "SELECT LAST_INSERT_ROWID();" >> id;
@@ -78,9 +81,10 @@ int Database::save_particle
 }
 
 
-void Database::clear_above(double xstar)
+void Database::clear_above(const Double& xstar)
 {
-    db << "DELETE FROM particles WHERE x > ?;" << xstar;
+    db << "DELETE FROM particles WHERE (x, xtb) >= (?, ?);"
+       << xstar.get_value() << xstar.get_tiebreaker();
 }
 
 } // namespace

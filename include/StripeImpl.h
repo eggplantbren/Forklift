@@ -12,25 +12,19 @@ template<Model M>
 Stripe<M>::Stripe
     (int _stripe_id,
      const std::vector<M>& _particles,
+     const std::vector<Double>& _xs,
+     const std::vector<Double>& _ys,
      const Double& _xstar)
 :stripe_id(_stripe_id)
 ,particles(_particles)
+,xs(_xs)
+,ys(_ys)
 ,xstar(_xstar)
-,ystar(Tools::minus_infinity)
+,ystar{Tools::minus_infinity, 0.0}
 ,iteration(0)
 {
     std::cout << "Initialising stripe " << stripe_id << ' ';
-    std::cout << "with threshold " << xstar.get_value() << "..." << std::flush;
-
-    xs.reserve(particles.size());
-    ys.reserve(particles.size());
-    for(const auto& m: particles)
-    {
-        xs.emplace_back(m.x());
-        ys.emplace_back(m.y());
-    }
-
-    std::cout << "done.\n" << std::endl;
+    std::cout << "with threshold " << xstar.get_value() << '.' << std::endl;
 }
 
 template<Model M>
@@ -55,7 +49,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
         bytes = particles[worst].to_bytes();
 
     database.save_particle(stripe_id, iteration, bytes,
-                           xs[worst].get_value(), ys[worst].get_value());
+                           xs[worst], ys[worst]);
 
     // Update threshold
     ystar = ys[worst];

@@ -36,6 +36,8 @@ class Stripe
         // Constructor
         Stripe(int _stripe_id,
                const std::vector<M>& _particles,
+               const std::vector<Double>& _xs,
+               const std::vector<Double>& _ys,
                const Double& _xstar);
 
         // Do one NS iteration

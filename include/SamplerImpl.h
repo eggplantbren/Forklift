@@ -13,16 +13,18 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
 :rng(_rng)
 ,stripe_id(0)
 ,iteration(0)
-,xstar(Tools::minus_infinity)
+,xstar(Tools::minus_infinity, 0.0)
 {
     std::cout << "Generating particles from the prior..." << std::flush;
 
     particles.reserve(Constants::num_particles);
     xs.reserve(Constants::num_particles);
+    ys.reserve(Constants::num_particles);
     for(int i=0; i<Constants::num_particles; ++i)
     {
         M m{rng};
-        xs.emplace_back(m.x());
+        xs.emplace_back(m.x(), rng);
+        ys.emplace_back(m.y(), rng);
         particles.emplace_back(std::move(m));
     }
 
@@ -34,7 +36,7 @@ template<Model M>
 void Sampler<M>::update()
 {
     // Create stripe and ascend
-    Stripe<M> stripe(stripe_id, particles, xstar);
+    Stripe<M> stripe(stripe_id, particles, xs, ys, xstar);
     int stripe_iterations = Constants::num_particles
                                         *(Constants::depth_nats - 0); //stripe_id);
     for(int i=0; i<stripe_iterations; ++i)
@@ -68,7 +70,7 @@ void Sampler<M>::ns_iteration()
 
     // Update threshold
     xstar = xs[worst];
-    std::cout << "Threshold = " << xstar << '.' << std::endl;
+    std::cout << "Threshold = " << xstar.get_value() << '.' << std::endl;
 
     std::cout << "Replacing particle..." << std::flush;
 
@@ -85,6 +87,7 @@ void Sampler<M>::ns_iteration()
 
         particles[worst] = particles[copy];
         xs[worst] = xs[copy];
+        ys[worst] = ys[copy];
     }
 
     // Do MCMC
@@ -98,11 +101,12 @@ void Sampler<M>::ns_iteration()
 
         if(rng.rand() <= exp(logh))
         {
-            double x = proposal.x();
+            Double x = {proposal.x(), xs[k].get_tiebreaker(), rng};
             if(x >= xstar)
             {
                 particles[k] = proposal;
                 xs[k] = x;
+                ys[k] = {proposal.y(), rng};
                 ++accepted;
             }
         }

@@ -2,6 +2,7 @@
 #define Forklift_Sampler_h
 
 #include <Database.h>
+#include <Double.h>
 #include <Model.h>
 #include <Stripe.h>
 #include <tuple>
@@ -22,13 +23,13 @@ class Sampler
 
         // Particles with their scalars
         std::vector<M> particles;
-        std::vector<double> xs;
+        std::vector<Double> xs, ys;
 
         // Iteration counter
         int stripe_id, iteration;
 
         // Threshold for first scalar
-        double xstar;
+        Double xstar;
 
         // Do one NS iteration wrt x
         void ns_iteration();
