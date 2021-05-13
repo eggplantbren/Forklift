@@ -46,10 +46,15 @@ class Results:
                                     flags=apsw.SQLITE_OPEN_READONLY)
         self.db = self.conn.cursor()
         self.db2 = self.conn.cursor()
+
+        self.wconn = apsw.Connection("output/forklift.db")
+        self.writer = self.wconn.cursor()
+
         self.load_scalars()
 
     def __del__(self):
         self.conn.close()
+        self.wconn.close()
 
     def load_scalars(self):
         size = self.db.execute("SELECT COUNT(*) FROM particles;")\
@@ -78,6 +83,16 @@ class Results:
             data = np.array(data)
             stripe_lpm = np.log(1.0 - np.exp(-1.0)) - stripe_id
             lpms = -data[:,0]/self.num_particles
+
+            self.writer.execute("BEGIN;")
+            for i in range(data.shape[0]):
+                self.writer.execute("UPDATE particles SET lpm = ?\
+                                WHERE stripe_id = ?\
+                                AND iteration = ?;",
+               (lpms[i], stripe_id, int(data[i,0])))
+            self.writer.execute("COMMIT;")
+
+
             lpms += stripe_lpm - logsumexp(lpms)
             logws = np.hstack([logws, lpms])
             xs = np.hstack([xs, data[:,1]])
