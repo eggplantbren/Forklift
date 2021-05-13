@@ -96,6 +96,9 @@ class Results:
             stripe_lpm = np.log(1.0 - np.exp(-1.0)) - stripe_id
             lpms = -data[:,0]/self.num_particles
 
+            lpms += stripe_lpm - logsumexp(lpms)
+            logws = np.hstack([logws, lpms])
+
             self.writer.execute("BEGIN;")
             for i in range(data.shape[0]):
                 self.writer.execute("""INSERT INTO lpms VALUES (?, ?, ?)
@@ -104,9 +107,6 @@ class Results:
                (stripe_id, int(data[i,0]), lpms[i]))
             self.writer.execute("COMMIT;")
 
-
-            lpms += stripe_lpm - logsumexp(lpms)
-            logws = np.hstack([logws, lpms])
             xs = np.hstack([xs, data[:,1]])
             ys = np.hstack([ys, data[:,2]])
 
@@ -142,7 +142,7 @@ results.plot_scalars()
 # Extent for canonical distributions
 limits = [1.0, 100.0, 1.0, 100.0]
 num = 51
-resid = False
+resid = True
 logzs_infos = results.canonical_grid(limits, num, resid)
 
 # Extent for plotting
