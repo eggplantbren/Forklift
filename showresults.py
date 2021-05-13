@@ -142,7 +142,7 @@ results.plot_scalars()
 # Extent for canonical distributions
 limits = [1.0, 100.0, 1.0, 100.0]
 num = 51
-resid = True
+resid = False
 logzs_infos = results.canonical_grid(limits, num, resid)
 
 # Extent for plotting
