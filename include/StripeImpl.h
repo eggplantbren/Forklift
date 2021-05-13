@@ -12,7 +12,7 @@ template<Model M>
 Stripe<M>::Stripe
     (int _stripe_id,
      const std::vector<M>& _particles,
-     double _xstar)
+     const Double& _xstar)
 :stripe_id(_stripe_id)
 ,particles(_particles)
 ,xstar(_xstar)
@@ -20,10 +20,16 @@ Stripe<M>::Stripe
 ,iteration(0)
 {
     std::cout << "Initialising stripe " << stripe_id << ' ';
-    std::cout << "with threshold " << xstar << "..." << std::flush;
+    std::cout << "with threshold " << xstar.get_value() << "..." << std::flush;
+
+    xs.reserve(particles.size());
     ys.reserve(particles.size());
     for(const auto& m: particles)
+    {
+        xs.emplace_back(m.x());
         ys.emplace_back(m.y());
+    }
+
     std::cout << "done.\n" << std::endl;
 }
 
@@ -49,13 +55,14 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
         bytes = particles[worst].to_bytes();
 
     database.save_particle(stripe_id, iteration, bytes,
-                           particles[worst].x(), ys[worst]);
+                           xs[worst].get_value(), ys[worst].get_value());
 
     // Update threshold
     ystar = ys[worst];
 
     std::cout << "Saved particle. Threshold updated to (";
-    std::cout << xstar << ", " << ystar << ")." << std::endl;
+    std::cout << xstar.get_value() << ", " << ystar.get_value();
+    std::cout << ")." << std::endl;
 
     std::cout << "Replacing particle..." << std::flush;
 
@@ -71,6 +78,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
         }
 
         particles[worst] = particles[copy];
+        xs[worst] = xs[copy];
         ys[worst] = ys[copy];
     }
 
@@ -85,13 +93,14 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 
         if(rng.rand() <= exp(logh))
         {
-            double x = proposal.x();
+            Double x = {proposal.x(), xs[k].get_tiebreaker(), rng};
             if(x >= xstar)
             {
-                double y = proposal.y();
+                Double y = {proposal.y(), ys[k].get_tiebreaker(), rng};
                 if(y >= ystar)
                 {
                     particles[k] = proposal;
+                    xs[k] = x;
                     ys[k] = y;
                     ++accepted;
                 }

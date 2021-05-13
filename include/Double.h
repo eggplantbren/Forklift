@@ -14,8 +14,18 @@ class Double
         double tiebreaker;
 
     public:
+        // Set the values
         Double(double _value, double _tiebreaker);
-        bool operator < (const Double& other) const;
+
+        // Set the values and perturb tiebreaker while you're at it
+        Double(double _value, double _tiebreaker, Tools::RNG& rng);
+
+        // Set the value and generate tiebreaker
+        Double(double _value, Tools::RNG& rng);
+        double get_value() const;
+        double get_tiebreaker() const;
+        bool operator <  (const Double& other) const;
+        bool operator >= (const Double& other) const;
 };
 
 } // namespace
