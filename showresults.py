@@ -47,8 +47,20 @@ class Results:
         self.db = self.conn.cursor()
         self.db2 = self.conn.cursor()
 
-        self.wconn = apsw.Connection("output/forklift.db")
+        self.wconn = apsw.Connection("output/lpms.db")
         self.writer = self.wconn.cursor()
+
+        self.writer.execute("PRAGMA JOURNAL_MODE = WAL;")
+        self.writer.execute("PRAGMA SYNCHRONOUS = 0;")
+        self.writer.execute("BEGIN;")
+        self.writer.execute("DROP TABLE IF EXISTS lpms;")
+        self.writer.execute("CREATE TABLE IF NOT EXISTS lpms\
+            (stripe_id INTEGER NOT NULL,\
+             iteration INTEGER NOT NULL,\
+             lpm       REAL NOT NULL,\
+             PRIMARY KEY (stripe_id, iteration))\
+            WITHOUT ROWID;")
+        self.writer.execute("COMMIT;")
 
         self.load_scalars()
 
@@ -86,10 +98,10 @@ class Results:
 
             self.writer.execute("BEGIN;")
             for i in range(data.shape[0]):
-                self.writer.execute("UPDATE particles SET lpm = ?\
-                                WHERE stripe_id = ?\
-                                AND iteration = ?;",
-               (lpms[i], stripe_id, int(data[i,0])))
+                self.writer.execute("""INSERT INTO lpms VALUES (?, ?, ?)
+                    ON CONFLICT DO UPDATE
+                        SET lpm = excluded.lpm;""",
+               (stripe_id, int(data[i,0]), lpms[i]))
             self.writer.execute("COMMIT;")
 
 

@@ -1,6 +1,6 @@
 *.o
 libforklift.a
 main
-output/forklift.db*
+output/*.db*
 output/*.mp4
 output/*.png

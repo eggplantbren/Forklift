@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS constants\n\
 CREATE TABLE IF NOT EXISTS particles\n\
 (stripe_id INTEGER NOT NULL,\n\
  iteration INTEGER NOT NULL,\n\
- lpm       REAL,\n\
  params    BLOB,\n\
  x         REAL NOT NULL,\n\
  y         REAL NOT NULL,\n\
@@ -71,8 +70,8 @@ int Database::save_particle
      const std::optional<std::vector<unsigned char>>& bytes,
      const Double& x, const Double& y)
 {
-    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
-       << stripe_id << iteration << nullptr
+    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?);"
+       << stripe_id << iteration
        << bytes << x.get_value() << y.get_value()
        << x.get_tiebreaker() << y.get_tiebreaker();
 
