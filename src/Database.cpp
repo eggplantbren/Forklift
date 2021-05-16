@@ -1,4 +1,5 @@
 #include "Database.h"
+#include <iostream>
 
 namespace Forklift
 {
@@ -6,12 +7,14 @@ namespace Forklift
 Database::Database()
 :db(filename)
 {
+    std::cout << "Initialising database..." << std::flush;
     set_pragmas();
 
     begin();
     drop_tables();
     create_tables();
     commit();
+    std::cout << "done." << std::endl;
 }
 
 void Database::set_pragmas()

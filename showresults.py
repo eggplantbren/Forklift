@@ -1,16 +1,23 @@
+#!/usr/bin/env python
+
+print("Loading Python modules...", flush=True, end="")
+
 import apsw
 import matplotlib.pyplot as plt
 import numba
 import numpy as np
 import numpy.random as rng
 
+print("done.", flush=True)
+
+
+print(f"JIT compiling functions...", flush=True, end="")
+
 @numba.njit("float64(float64[:])")
 def logsumexp(xs):
     top = np.max(xs)
     return np.log(np.sum(np.exp(xs - top))) + top
 
-
-MAX_LOAD_SIZE = 20000000
 
 @numba.njit("float64[:,:,:](float64[:], float64[:], float64[:], float64[:], int64, boolean)")
 def _canonical_grid(limits, xs, ys, logws, num, resid):
@@ -39,9 +46,15 @@ def _canonical_grid(limits, xs, ys, logws, num, resid):
         print("Finished row", str(i+1))
     return logzs_infos
 
+print("done.", flush=True)
+
+
+MAX_LOAD_SIZE = 20000000
+
 
 class Results:
     def __init__(self):
+        print("Initialising databases...", flush=True, end="")
         self.conn = apsw.Connection("output/forklift.db",
                                     flags=apsw.SQLITE_OPEN_READONLY)
         self.db = self.conn.cursor()
@@ -61,6 +74,7 @@ class Results:
              PRIMARY KEY (stripe_id, iteration))\
             WITHOUT ROWID;")
         self.writer.execute("COMMIT;")
+        print("done.", flush=True)
 
         self.load_scalars()
 
@@ -69,6 +83,7 @@ class Results:
         self.wconn.close()
 
     def load_scalars(self):
+        print("Getting particle counts...", flush=True, end="")
         size = self.db.execute("SELECT COUNT(*) FROM particles;")\
                                 .fetchone()[0]
         thin = 1.0
@@ -78,6 +93,7 @@ class Results:
         self.num_particles = self.db.execute("SELECT num_particles\
                                               FROM constants;")\
                                                 .fetchone()[0]
+        print("done.", flush=True)
 
         logws, xs, ys = [], [], []
         for row in self.db.execute("SELECT stripe_id, COUNT(*) FROM particles\
