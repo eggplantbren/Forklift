@@ -4,3 +4,9 @@ main
 output/*.db*
 output/*.mp4
 output/*.png
+paper/Definitions/logo-mdpi-eps-converted-to.pdf
+paper/Definitions/logo-orcid-eps-converted-to.pdf
+paper/ms.aux
+paper/ms.log
+paper/ms.out
+paper/ms.pdf
