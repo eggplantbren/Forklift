@@ -59,6 +59,15 @@
 
 %=================================================================
 % Add packages and commands here. The following packages are loaded in our class file: fontenc, inputenc, calc, indentfirst, fancyhdr, graphicx, epstopdf, lastpage, ifthen, lineno, float, amsmath, setspace, enumitem, mathpazo, booktabs, titlesec, etoolbox, tabto, xcolor, soul, multirow, microtype, tikz, totcount, changepage, paracol, attrib, upgreek, cleveref, amsthm, hyphenat, natbib, hyperref, footmisc, url, geometry, newfloat, caption
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{dsfont}
+\newcommand{\xx}{\boldsymbol{\theta}}
+\newcommand{\dx}{d\boldsymbol{\theta}}
+\newcommand{\data}{D}
+\newcommand{\II}{I}
+\newcommand{\mnras}{Monthly Notices of the Royal Astronomical Society}
+\newcommand{\todo}{\color{blue}{\bf TODO}:~}
 
 %=================================================================
 %% Please use the following mathematics environments: Theorem, Lemma, Corollary, Proposition, Characterization, Property, Problem, Example, ExamplesandDefinitions, Hypothesis, Remark, Definition, Notation, Assumption
@@ -104,8 +113,17 @@ Private Bag 92019, Auckland 1142, New Zealand; bj.brewer@auckland.ac.nz}
 % Abstract (Do not insert blank lines, i.e. \\) 
 \abstract{I introduce {\em Forklift}, an implementation of Nested Sampling (NS)
 that broadens its applicability to problems with two objective functions.
-Such problems arise frequently in statistical mechanics, and occasionally in
-Bayesian inference.}
+I demonstrate the algorithm on three example problems:
+(i) a toy problem whose partition function $Z(\beta_1, \beta_2)$ (of two
+temperatures) is known, so we can compute the actual error in the reconstructed
+function $Z(\beta_1, \beta_2)$; (ii) a collection of atoms with a potential
+that is intermediate between a Lennard-Jones form and a `polymer' form; and
+(iii) {\todo decide between a few options: image reconstruction with an
+intractable normalizing constant in the prior, or perhaps the `Potts' example
+which is a compromize between a 2D potts model and a product of many 1D
+Potts models}.
+A free software implementation in modern C++ is available at
+\url{https://github.com/eggplantbren/Forklift}.}
 
 % Keywords
 \keyword{nested sampling; bayesian inference; monte carlo; statistical mechanics; multi-objective optimization} 
@@ -139,141 +157,536 @@ Bayesian inference.}
 %\encyclopediadef{Instead of the abstract}
 %\entrylink{The Link to this entry published on the encyclopedia platform.}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\setcounter{section}{-1} %% Remove this when starting to work on the template.
-\section{How to Use this Template}
+\section{Nested Sampling}
 
-The template details the sections that can be used in a manuscript. Note that the order and names of article sections may differ from the requirements of the journal (e.g., the positioning of the Materials and Methods section). Please check the instructions on the authors' page of the journal to verify the correct order and names. For any questions, please contact the editorial office of the journal or support@mdpi.com. For LaTeX-related questions please contact latex@mdpi.com.
-%The order of the section titles is: Introduction, Materials and Methods, Results, Discussion, Conclusions for these journals: aerospace,algorithms,antibodies,antioxidants,atmosphere,axioms,biomedicines,carbon,crystals,designs,diagnostics,environments,fermentation,fluids,forests,fractalfract,informatics,information,inventions,jfmk,jrfm,lubricants,neonatalscreening,neuroglia,particles,pharmaceutics,polymers,processes,technologies,viruses,vision
+Nested Sampling (NS) \citep{skilling2006nested} is general
+Monte Carlo algorithm that can solve a wide range of problems in Bayesian
+computation, statistical mechanics, and information theory
+\citep[e.g.][]{partay2010efficient, exoplanet, baldock2016determining,
+brewer2017computing}.
+Its key strength its ability to cope with phase transitions and other
+features which cause problems for many other methods such as those based
+on `annealing' \citep{neal2001annealed}. These methods all fall into that half
+of the Monte Carlo landscape that addresses {\em what distribution to sample}
+rather than how to sample it.
 
-\section{Introduction}
+In a Bayesian inference problem with unknown parameters denoted collectively
+by a vector $\xx$, the
+posterior distribution for the parameters given a data proposition $\data$ and
+a `prior information' proposition $\II$ is:
+\begin{eqnarray}
+p(\xx | \data, \II) &=&
+\frac{p(\xx | \II)p(\data | \xx, \II)}{p(\data | \II)}\\
+&=& \frac{\pi(\xx)L(\xx)}{Z}
+\end{eqnarray}
+where $\pi(\xx)$ is the prior distribution, $L(\xx)$ is the likelihood
+function, and $Z$ is the normalising constant, known as the
+`marginal likelihood' or `evidence':
+\begin{eqnarray}
+Z &=& \int \pi(\xx) L(\xx) \, \dx.\label{eqn:evidence}
+\end{eqnarray}
 
-The introduction should briefly place the study in a broad context and highlight why it is important. It should define the purpose of the work and its significance. The current state of the research field should be reviewed carefully and key publications cited. Please highlight controversial and diverging hypotheses when necessary. Finally, briefly mention the main aim of the work and highlight the principal conclusions. As far as possible, please keep the introduction comprehensible to scientists outside your particular field of research. Citing a journal paper \cite{ref-journal}. Now citing a book reference \cite{ref-book1,ref-book2} or other reference types \cite{ref-unpublish,ref-communication,ref-proceeding}. Please use the command \citep{ref-thesis,ref-url} for the following MDPI journals, which use author--date citation: Administrative Sciences, Arts, Econometrics, Economies, Genealogy, Histories, Humanities, IJFS, Journal of Intelligence, Journalism and Media, JRFM, Languages, Laws, Religions, Risks, Social Sciences.
- 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Materials and Methods}
+$Z$ is useful because it is the prior probability of the data conditional on
+the hypothesis that $\xx$ is {\em one of}
+the possibilities in the space being integrated over, along with
+whatever additional assumptions were made. $Z$ thus plays the role
+of a likelihood for the parameter space as a whole, and is a key input in
+calculating the posterior probabilities of competing `models' (mutually
+exclusive choices of $\II$).
+Naively, Equation~\ref{eqn:evidence} appears straightforward to compute because
+it is a simple expectation of $L$ with respect to the distribution $\pi$.
+However,
+NS is required because Equation~\ref{eqn:evidence}
+is the expected value of $L$ with respect to a very heavy-tailed distribution
+(the distribution of $L$-values implied by $\pi(\xx)$). This means a very
+large number of samples would be required.
+Hence, there is a strong
+connection between NS and ideas from rare event simulation
+(\citet{walter2017point} has explicitly explored this connection).
+Another way of thinking about this
+challenge is that the $Z$ integral is dominated by a region with very
+high values of $L$ but very low probability according to $\pi$ (and usually
+very low volume according to $d\xx$, as well).
 
-Materials and Methods should be described with sufficient details to allow others to replicate and build on published results. Please note that publication of your manuscript implicates that you must make all materials, data, computer code, and protocols associated with the publication available to readers. Please disclose at the submission stage any restrictions on the availability of materials or information. New methods and protocols should be described in detail while well-established methods can be briefly described and appropriately cited.
+The main goal of NS is to compute $Z$, but it can also be used to make
+Monte Carlo approximations of the posterior distribution, and to
+calculate the `information',
+or Kullback-Leibler divergence from the prior to the posterior:
+\begin{eqnarray}
+H &=& \int p(\xx | \data, \II) \log
+\left(\frac{p(\xx | \data, \II)}{p(\xx | \II)}\right) \, d\xx \\
+&=& \int \frac{\pi(\xx) L(\xx)}{Z} \log
+\left(\frac{L(\xx)}{Z}\right) \, d\xx.
+\end{eqnarray}
+$H$ quantifies how compressed the posterior distribution is with
+respect to the prior. For example, $H = 100$ nats (the units obtained when
+the logarithm is the natural logarithm) implies, loosely speaking,
+that the posterior is to be found in a tiny region of the space that
+has a prior probability of only $e^{-100}$.
+$H$ can be interpreted quite literally as a measure of how much
+the specific data $\data$ resolved the question ``what is the value
+of $\xx$, precisely?'' \citep{knuth_questions, van2017inquiry}.
+\citet{brewer2017computing} introduced a version of NS that computes
+Shannon entropies, including entropies of marginal distributions (whereas
+standard NS can only compute divergences for full joint distributions).
 
-Research manuscripts reporting large datasets that are deposited in a publicly avail-able database should specify where the data have been deposited and provide the relevant accession numbers. If the accession numbers have not yet been obtained at the time of submission, please state that they will be provided during review. They must be provided prior to publication.
+NS works by drawing particles from the
+prior $\pi(\xx)$ and successively imposing constraints on the value of
+the likelihood $L(\xx)$ that compress the prior mass by a (roughly) known
+and constant factor. Like related algorithms such as those
+based on `annealing' or `tempering', NS
+moves through a sequence of probability distributions, beginning with the
+prior. It is the specific sequence of distributions used that distinguishes
+NS from annealing. The sequence of distributions used in NS is defined by
+\begin{eqnarray}
+p(\xx; \ell) &=& \frac{1}{X(\ell)}\pi(\xx)\mathds{1}\left(L(\xx) > \ell\right).
+\label{eq:constrained_prior}
+\end{eqnarray}
+where $X(\ell) = \int \pi(\xx)\mathds{1}\left(L(\xx) > \ell\right)$ is the
+normalising constant of the distribution constrained by the condition
+$L(\xx) > \ell)$. $X$ is also the quantile function of the likelihoods.
 
-Interventionary studies involving animals or humans, and other studies require ethical approval must list the authority that provided approval and the corresponding ethical approval code.
-\begin{quote}
-This is an example of a quote.
-\end{quote}
+The marginal likelihood can be computed by numerically integrating the
+function $L(X)$:
+\begin{eqnarray}
+Z &=& \int_0^1 L(X)\, dX.
+\end{eqnarray}
+\citet{salomone2018unbiased}
+recently showed how NS can be viewed as an instance of
+Sequential Monte Carlo (SMC), with a particular choice of the sequence of
+distributions. By weighting the sequence of discarded points differently from
+Skilling, the estimates of $Z$ are unbiased.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Results}
+%Throughout this paper we use the popular `overloaded' notation for some
+%functions and probability distributions.
+%For example, $L(\xx)$ is the likelihood function, and $L(X)$ is the likelihood
+%as a function of the enclosed prior mass $X$. The inverse, $X(L)$, takes a
+%likelihood as input and computes the corresponding enclosed prior mass.
+%Therefore the symbol $L$ implies the output of the function is a
+%likelihood value; so $L(\xx)$ represents a likelihood value computed from
+%the parameters $\xx$, and $L(X)$ represents a likelihood value that
+%corresponds to an amount $X$ of prior mass. In more traditional notation,
+%$X(L)$ would be written using function composition, $X(L(\xx))$.
 
-This section may be divided by subheadings. It should provide a concise and precise description of the experimental results, their interpretation as well as the experimental conclusions that can be drawn.
-\subsection{Subsection}
-\subsubsection{Subsubsection}
+\section{Accessing distributions other than the posterior}
+Using a single NS run, we can also calculate the properties of any
+distribution that
+is (in some sense which we do not make precise) {\em intermediate}
+between the prior and the posterior. For example, we might be interested in
+a `power posterior' where the likelihood is raised to a power $\beta$
+(this is also the family of distributions used in `annealing' or `tempering'
+methods):
+\begin{eqnarray}
+p(\xx; \beta) &=& \frac{\pi(\xx)L(\xx)^\beta}
+                       {Z(\beta)}\label{eqn:power_posterior}
+\end{eqnarray}
+The normalisation and posterior samples from this distribution can be obtained
+from the original NS run by re-weighting the output according to $L(\xx)^\beta$
+instead of the usual $L(\xx)$ used to obtain the posterior.
+Bayesian inference problems with `gaussian noise' likelihood assumptions
+provide an example of where power posteriors might be useful.
+Computing $p(\xx; \beta)$ for $\beta \neq 1$ allows us to explore what the
+posterior distribution would have been if the noise variance had been greater,
+without having to re-run the algorithm.
+This is different from including an extra parameter to allow the noise variance
+to be greater, because NS allows you to test the consequences of values of the
+variance that are very implausible given the data, i.e. that do not have
+a high posterior probability.
 
-Bulleted lists look like this:
-\begin{itemize}
-\item	First bullet;
-\item	Second bullet;
-\item	Third bullet.
-\end{itemize}
+Alternatives to NS include methods based on `annealing', where a sequence of
+distributions of the form of Equation~\ref{eqn:power_posterior} is used.
+There are many different methods based on this idea, such as the popular
+parallel tempering \citep{hansmann1997parallel, gregory2005bayesian},
+simulated tempering \citep{marinari1992simulated},
+annealed importance sampling \citep{neal2001annealed}, and
+steppingstone sampling \citep{xie2010improving}.
+However, unlike annealing methods, NS requires only a small number of
+tuning parameters (just the number of particles $N$ is inherent to NS, although
+most NS implementations have additional tuning parameters related to their
+methods for sampling Equation~\ref{eq:constrained_prior}). Annealing methods
+also tend to fail on phase change problems \citep{skilling} which can arise
+in data analysis \citep{rjobject, exoplanet} as well as in statistical
+mechanics, where they are more familiar.
 
-Numbered lists can be added as follows:
+In statistical mechanics, Equation~\ref{eqn:power_posterior} defines the
+family of {\it canonical distributions}, usually written as:
+\begin{eqnarray}
+p(\xx; \beta) &=& \frac{\pi(\xx)\exp[-\beta E(\xx)]}{Z(\beta)}
+\end{eqnarray}
+where $E(\xx)$ is the energy function (analogous to minus the log likelihood
+in the Bayesian case), and $\pi(\xx)$ is often uniform over
+phase space (the set of possible positions and momenta of a collection of
+particles) or configuration space (the set of possible positions of a collection
+of particles).
+
+In this context we usually want to
+compute $Z(\beta)$ as a function of $\beta$, which is called the
+{\it partition function}. When the full phase space of positions and momenta
+is included, the KL-divergence as a function of temperature,
+$H(\beta)$, is the Gibbs entropy (up to a sign change and a constant factor).
+A single run of NS can be used to reconstruct $Z(\beta)$ and $H(\beta)$,
+allowing the study of
+the properties of materials from first principles, based on hypotheses about
+the atoms or molecules that make them up
+\citep[e.g.][]{partay2010efficient, baldock2016determining}.
+The NS exploration algorithm is invariant under
+monotonic transformations of $L$ or $E$ and therefore there we can discuss the
+algorithm in Bayesian or statistical mechanical terms without loss of
+generality.
+
+\subsection{Notation for Objective Functions}
+Throughout this paper we will refer to $L(\xx)$ or
+$-E(\xx)$ as `objective functions',
+by analogy with the terminology used in optimization.
+Although we are interested in sampling rather
+than optimization, we still want to increase the values of $L$ or decrease
+the values of $E$ relative to what is typical of the prior --- just in
+a controlled manner, so we can quantify prior mass as we ascend.
+
+Throughout this paper and the software, there are three
+conventions used to define the objective functions. $L()$ is named by analogy
+with likelihood, and appears multiplicatively as in
+Equation~\ref{eqn:power_posterior}. $E() = -\ln L()$ is named by analogy with
+`energy'. Finally, in the software,
+$S() = \ln L() = -E()$ is often used (the $S$ stands for a
+`{\em S}calar function of $\xx$'). The algorithm ascends $L$ and $S$, but
+descends $E$.
+
+\section{Multiple objective functions}
+In some inference and
+statistical mechanics problems, there are two or more scalar functions of
+$\xx$ that are relevant. Suppose our prior is $\pi(\xx)$ as before, and
+we obtain information that fixes the expected values of two scalar
+``likelihood'' functions of $\xx$, $L_1(\xx)$ and $L_2(\xx)$
+(or equivalently, ``energy'' functions $E_1(\xx) = -\ln L_1(\xx)$ and
+$E_2 = -\ln L_2(\xx)$). The
+updated probability distribution that takes into account the constraints is
+of the canonical form \citep{jaynes1957information}:
+\begin{align}
+p(\xx; \beta_1, \beta_2) &=
+    \frac{\pi(\xx)L_1(\xx)^{\beta_1}L_2(\xx)^{\beta_2}}
+         {Z(\beta_1, \beta_2)} \\
+    &=
+    \frac{\pi(\xx)\exp\left[-\beta_1E_1(\xx) - \beta_2E_2(\xx)\right]}
+         {Z(\beta_1, \beta_2)}
+\end{align}
+where $\beta_1$ and $\beta_2$ are two `inverse temperatures' (the temperatures
+themselves are $T_1 = \beta_1^{-1}$ and $T_2 = \beta_2^{-1}$).
+In a Bayesian
+context, this distribution (when $\beta_1 = \beta_2 = 1$) could be the
+posterior distribution for parameters $\xx$
+given two datasets, where $L_1$ and $L_2$ are the
+likelihood functions for each dataset. In statistical mechanics, $E_1$ might
+be the total energy and $E_2$ might be the total
+angular momentum, or perhaps a term depending on an external field (so $\beta_2$
+would then describe the strength of the external field).
+
+If we are only interested in a single canonical distribution, for example
+with $\beta_1 = 0.3$ and $\beta_2 = 0.7$, we can estimate its normalising
+constant and by running standard Nested Sampling with objective function
+$L(\xx) = L_1(\xx)^{\beta_1}L_2(\xx)^{\beta_2}$. However, what if we
+are interested in a range of values for $\beta_1$ and $\beta_2$, and we
+want to know the entire partition function $Z(\beta_1, \beta_2)$?
+This work describes
+progress towards solving this class of problems while maintaining the benefits
+of Nested Sampling, such as the ability to cope with phase
+transitions. The algorithm is presented here for problems with two objective
+functions, but the implementation allows for more than two (though the
+performance is those cases is likely to be poor).
+
+
+\section{Algorithm requirements}
+The prior $\pi(\xx)$ implies a certain prior for $L_1$ and $L_2$, which we
+denote $\pi(L_1, L_2)$, overloading the $\pi$ symbol.
+An example of a prior is shown as the
+probability density in Figure~\ref{fig:joint1}. The partition function
+$Z(\beta_1, \beta_2)$ is a set of expected values with respect to this density.
+By analogy with the standard case of one objective function,
+simple Monte Carlo sampling from $\pi$ will not work except for values of
+$(\beta_1, \beta_2)$ where the canonical distributions of interest are
+not too different from $\pi$.
+We need a sampler that explores regions where $L_1$ and $L_2$ are increased
+(relative to what's typical of $\pi$) in order
+to accurately estimate $Z(\beta_1, \beta_2)$. The specific way of increasing
+$L_1$ and $L_2$ should follow the requirements listed in the following
+subsection, which are unique to NS. Another unique property of NS which our
+algorithm {\em does not} satisfy is discussed in Appendix~\ref{sec:property}.
+
+\subsection{Desiderata}
+While we could not see how to satisfy the property in
+Appendix~\ref{sec:property},
+the algorithm of this paper does satisfy the following other NS properties:
 \begin{enumerate}
-\item	First item; 
-\item	Second item;
-\item	Third item.
+\item It begins with $N$ points drawn from the prior $\pi(\xx)$.
+\item It seeks to explore regions where the values of
+$L_1(\xx)$ and $L_2(\xx)$ are higher than the prior $\pi(L_1, L_2)$
+would typically imply.
+\item It considers a sequence of probability
+distributions proportional to $\pi$, but restricted to smaller and smaller
+domains for which the enclosed prior mass shrinks by a (roughly) constant and
+known factor at each iteration.
+\item The exploration procedure is invariant under monotonic transformations of
+$L_1$ and $L_2$, i.e. it should only depend on rankings of $L_1$ and $L_2$
+values and not on the numeric values themselves.
 \end{enumerate}
+The standard Nested Sampling algorithm has these properties but for a
+single objective function. The same is true of variants such as
+Diffusive Nested Sampling \citep{dns, dnest4} and PolyChord
+\citep{handley2015polychord}.
 
-The text continues here. 
+\subsection{The algorithm}
+The algorithm itself is rather simple. It consists of a collection of
+{\em reps} (short for repetitions) of Nested Sampling, each of which ascends
+a different compromise between $L_1$ and $L_2$. The output of the reps can then
+be used, with appropriate weights, to represent canonical distributions at
+any temperature.
 
-\subsection{Figures, Tables and Schemes}
+The combination of the reps makes use of the (approximate?) unbiasedness
+property of Nested Sampling when the prior weights of the dead particles are
+assigned proportional to
+$[(N-1)/N]^i$ at iteration $i$, instead of being based on
+Skilling's geometric sequence of $X$-values given by $\exp(-i/N)$.
+\citet{walter2017point} demonstrated that the Nested Sampling estimator of $Z$
+is unbiased with these weights, but assuming perfect sampling of the replacement
+particles at each iteration. Additionally, using the framework of
+Sequential Monte Carlo \citep{doucet2001introduction},
+\citet{salomone2018unbiased} showed that this remains true even if imperfect
+MCMC is used to generate new particles. Technically, this property is
+lost if the sequence of distributions is chosen adaptively (a key feature of NS)
+rather than being fixed in advanced. However, this paper demonstrates that the
+algorithm works well in practice despite this limitation.
+{\todo Verify/prove statement about bias, and that it means I can average
+reps the way I'm doing it. Also check this remains the case with the random
+thinning that I'm using.}
 
-All figures and tables should be cited in the main text as Figure~\ref{fig1}, Table~\ref{tab1}, etc.
+The fact that $Z$ estimates can be made unbiased means that separate $Z$
+estimates can be averaged together and the properties of the averaged estimator
+will be easily understood and satisfactory ({\todo probably need to be more
+technical here.}). {\todo The following statement is based on intuition}
+Runs that ascend the `wrong' objective function are still unbiased
+estimates of $Z$ for the `right' objective function. Some of the reps will
+be well-positioned to represent some canonical distributions but inappropriate
+for others. When this happens, the particles from the rep will just have very
+low weights with respect to some canonical distributions.
 
-\begin{figure}[H]
-\includegraphics[width=10.5 cm]{Definitions/logo-mdpi}
-\caption{This is a figure. Schemes follow the same formatting. If there are multiple panels, they should be listed as: (\textbf{a}) Description of what is contained in the first panel. (\textbf{b}) Description of what is contained in the second panel. Figures should be placed in the main text near to the first time they are cited. A caption on a single line should be centered.\label{fig1}}
-\end{figure}   
+{\todo A description of the algorithm for a single rep follows}.
+For each rep, we set up a probability distribution over the objective functions,
+given by probabilities $\boldsymbol{p} = \{p_1, ..., p_n\}$,
+where $n$ is the number of
+objective functions. If there
+are only two objective functions, there is just a probability $p_1$ for
+objective function 1, and $p_2 = 1-p_1$ for objective function 2.
 
-% The MDPI table float is called specialtable
-\begin{specialtable}[H] 
-\caption{This is a table caption. Tables should be placed in the main text near to the first time they are~cited.\label{tab1}}
-%%% \tablesize{} %% You can specify the fontsize here, e.g., \tablesize{\footnotesize}. If commented out \small will be used.
-\begin{tabular}{ccc}
-\toprule
-\textbf{Title 1}	& \textbf{Title 2}	& \textbf{Title 3}\\
-\midrule
-Entry 1		& Data			& Data\\
-Entry 2		& Data			& Data\\
-\bottomrule
-\end{tabular}
-\end{specialtable}
+The first distribution is the prior $\pi(\xx)$. Objective function thresholds
+$(\ell_1, \ell_2)_0 = (-\infty, -\infty)$ are assigned.
+$N$ particles are generated
+from the prior. Then, an objective function is selected according to the
+probability distribution $\boldsymbol{p}$.
+Suppose the objective function chosen is number $k$.
+Then the worst particle wrt that criteron is written to disk and replaced,
+and the threshold is updated in the $k$th position only.
 
-%\begin{listing}[H]
-%\caption{Title of the listing}
-%\rule{\columnwidth}{1pt}
-%\raggedright Text of the listing. In font size footnotesize, small, or normalsize. Preferred format: left aligned and single spaced. Preferred border format: top border line and bottom border line.
-%\rule{\columnwidth}{1pt}
-%\end{listing}
+Essentially, a `rep' is just Nested Sampling, but where a threshold is
+maintained for all objective functions. At each iteration, the space is
+restricted by the value of only one of the objective functions.
 
-Text.
+The probability distribution $\boldsymbol{p}$ influences the
+proportion of the compressions that are done using each objective function.
+Different reps ought to have different values for the probability distribution.
+Some reps will mostly increase $L_1$, some will mostly increase $L_2$, and
+some will be in between. In the reference implementation
+(Appendix~\ref{sec:software}), the log-probabilities are chosen from a $t$
+distribution with 2 degrees of freedom, exponentiated, and then normalized.
 
-Text.
 
-\subsection{Formatting of Mathematical Components}
 
-This is the example 1 of equation:
-\begin{equation}
-a = 1,
-\end{equation}
-the text following an equation need not be a new paragraph. Please punctuate equations as regular text.
-%% If the documentclass option "submit" is chosen, please insert a blank line before and after any math environment (equation and eqnarray environments). This ensures correct linenumbering. The blank line should be removed when the documentclass option is changed to "accept" because the text following an equation should not be a new paragraph.
 
-This is the example 2 of equation:
-\end{paracol}
-\nointerlineskip
-\begin{equation}
-a = b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + q + r + s + t + u + v + w + x + y + z
-\end{equation}
+\begin{algorithm}[!ht]
+    \setstretch{1.35}
+    Set $N$, the number of particles \\
+    Set $M$, the number of reps \\
+    Set $d$, the target depth in nats \\
+    Compute $J = Nd$, the number of NS iterations per rep \\
+    \For{i in 1:$M$}{
+      Set initial threshold $(\ell_1^*, \ell_2^*) = (0, 0)$ \\
+      Generate initial particles $(\xx_1, ..., \xx_N)$ from prior $\pi$ \\
+      Generate a `direction' (probability distribution over objective functions) $\boldsymbol{p}$ \\
+      \For{j in 1:$J$}{
+          Choose an objective function $k$ according to $\boldsymbol{p}$ \\
+          Find $c = \textnormal{argmin}(\lambda C \to L_k(\xx_C))$, the index of the worst particle \\
+          Write out $\xx_c$ to disk as $\xx_{ij}$ with prior weight $w_{ij}$ proportional to $(1 - 1/N)^j$ \\
+          Replace threshold element $\ell_c^*$ with $L_k(\xx_c)$ \\
+          Replace particle $c$ with new particle generated from
+            $\pi\times\mathds{1}(L_1 > \ell_1^*, L_2 > \ell_2^*)$          
+      }
+    }
 
-% Example of a figure that spans the whole page width (the commands \widefigure and \begin{paracol}{2}, \linenumbers, and\switchcolumn need to be present). The same concept works for tables, too.
-\begin{figure}[H]	
-\widefigure
-\includegraphics[width=15 cm]{Definitions/logo-mdpi}
-\caption{This is a wide figure.\label{fig2}}
-\end{figure}  
-\begin{paracol}{2}
-\linenumbers
-\switchcolumn
+    Set $(T_1, T_2)$, the temperatures of a canonical distribution of interest \\
+    Compute $\hat{Z}(T_1, T_2) \leftarrow \left(\sum_{ij} w_{ij}L_1(\xx_{ij})^{1/T_1}L_2(\xx_{ij})^{1/T_2}\right) / \sum_{ij} w_{ij}$\\
+  \vspace*{0.5em}
+  \caption{The `Switch Sampling' algorithm.}
+\end{algorithm}
 
-Please punctuate equations as regular text. Theorem-type environments (including propositions, lemmas, corollaries etc.) can be formatted as follows:
-%% Example of a theorem:
-\begin{Theorem}
-Example text of a theorem.
-\end{Theorem}
 
-The text continues here. Proofs must be formatted as follows:
+\section{Example 1: Known solution}
+In the software repository, this example is implemented in
+{\tt examples/Demo.h} and {\tt examples/Demo.cpp}.
+We tested the algorithm on a simple 100-dimensional example, where the
+prior is a uniform distribution between 0 and 1 for each coordinate:
+\begin{eqnarray}
+\pi(\xx) &=& \prod_{i=1}^{100}
+\left\{
+\begin{array}{lr}
+1, & x_i \in [0, 1]\\
+0, & \textnormal{otherwise.}
+\end{array}
+\right.
+\end{eqnarray}
+The first objective function is quadratic in form, such that the canonical
+distributions are iid normal centered at $(0.5, 0.5, ..., 0.5)$:
+\begin{eqnarray}
+E_1(\xx) &=& \sum_{i=1}^{100} \left(\frac{x_i - 0.5}{0.1}\right)^2.
+\end{eqnarray}
+The second objective function, given by
+\begin{eqnarray}
+E_2(\xx) &=& \sum_{i=1}^{100}\sin^2(10 \pi x_i),
+\end{eqnarray}
+upweights states where coordinates $\{x_i\}$
+are close to 0, 0.1, 0.2, ..., 0.9 and 1.
+Since both of the objective functions are simple sums over the coordinates,
+the canonical distributions are products of independent distributions for
+each coordinate.
 
-%% Example of a proof:
-\begin{proof}[Proof of Theorem 1]
-Text of the proof. Note that the phrase ``of Theorem 1'' is optional if it is clear which theorem is being referred to.
-\end{proof}
-The text continues here.
+The canonical distributions for this system should draw the coordinates
+towards 0.5 (due to $E_1$) and towards the troughs of $E_2$, with the
+relative importance of these effects determined by the values of the
+inverse temperatures $\beta_1$ and $\beta_2$. Three example canonical
+distributions are shown in Figure~\ref{fig:demo_canonical}.
+The true partition function (computed numerically) and the Kullback-Leibler
+divergence from the prior to the canonical distribution are shown in
+Figure~\ref{fig:demo_truth} as a function of two temperatures. These show the
+common behaviour where lower temperatures correspond to lower values
+of the normalising constant $\log Z$ and higher values of the KL divergence
+$H$. There are no phase changes, which would result in discontinuities.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}
 
-Authors should discuss the results and how they can be interpreted from the perspective of previous studies and of the working hypotheses. The findings and their implications should be discussed in the broadest context possible. Future research directions may also be highlighted.
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.6]{figures/demo_canonical.pdf}
+\caption{Three canonical distributions for different values of the two
+temperatures $T_1$ and $T_2$, in the simple demo problem.
+These are for the one-dimensional case, but
+in this example, the 100 dimensional canonical distributions are `independent
+and identically distributed' version of this distribution.
+Low values of $T_1$ bring
+more probability towards the centre of the domain, and low values of $T_2$
+bring out the oscillatory structure in the probability density function.
+\label{fig:demo_canonical}}
+\end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusions}
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.6]{figures/demo_truth.pdf}
+\caption{The true partition function and KL divergence (from the prior to
+the canonical distribution) as a function of two temperatures for the
+test problem.\label{fig:demo_truth}}
+\end{figure}
 
-This section is not mandatory, but can be added to the manuscript if the discussion is unusually long or complex.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Patents}
+The algorithm was run for 1000 reps, to a `depth' of 500 nats,
+with 100 particles and 1000 MCMC steps per NS iteration per rep.
+Results are given in
+Figures~\ref{fig:demo_logZ_H},~\ref{fig:demo_residuals},
+and~\ref{fig:demo_N_eff}.
 
-This section is not mandatory, but may be added if there are patents resulting from the work reported in this manuscript.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.6]{figures/demo_logZ_H.pdf}
+\caption{The partition function $\ln(Z)$ and information $H$ as a function
+of the two temperatures, reconstructed using the algorithm. Compare with
+Figure~\ref{fig:demo_truth}.
+\label{fig:demo_logZ_H}}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.6]{figures/demo_residuals.pdf}
+\caption{The residuals, i.e., the difference between
+Figures~\ref{fig:demo_logZ_H} and~\ref{fig:demo_truth}.
+\label{fig:demo_residuals}}
+\end{figure}
+
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.6]{figures/demo_N_eff.pdf}
+\caption{The error in $\ln(Z)$, expressed in terms of an
+`effective number of particles' in a standard NS run that would lead to
+the same error at 1 sigma. No values are below $N_{\rm eff} = 1$.
+\label{fig:demo_N_eff}}
+\end{figure}
+
+%\begin{figure}[ht!]
+%\centering
+%\includegraphics[scale=1]{figures/output.png}
+%\caption{The sequence of discarded particles (yellow) and
+%points representing the canonical distribution at temperatures
+%$(T_1, T_2) = (0.1, 1)$ (black).\label{fig:output}}
+%\end{figure}
+
+
+
+%\begin{figure}[ht!]
+%\centering
+%\includegraphics[scale=0.5]{figures/results.pdf}
+%\caption{Numerical results for the test problem. These compare well with the
+%true partition function and KL divergence given in Figure~\ref{fig:truth}.
+%\label{fig:results}}
+%\end{figure}
+
+\section{Example 2: Lennard-Jones/Polymer Example}
+
+Consider $n$ Lennard-Jones atoms confined to the unit cube $[0, 1]^3$.
+The position of each atom is given by a vector
+$\boldsymbol{r}_i = (x_i, y_i, z_i)$.
+The potential energy of any configuration of the atoms is given by
+a sum over all pairs of atoms:
+\begin{eqnarray}
+U_{\rm LJ} &=& \sum_{i=1}^n\sum_{j=(i+1)}^n U_{\rm LJ}
+(\boldsymbol{r}_i, \boldsymbol{r}_j)
+\end{eqnarray}
+where the inter-atomic potential energy is given by:
+
+\begin{eqnarray}
+U_{\rm LJ}(\boldsymbol{r}_i, \boldsymbol{r}_j)
+&=& 4\epsilon
+\left[
+\left(\frac{\sigma}{|\boldsymbol{r}_i - \boldsymbol{r}_j|}\right)^12 -
+\left(\frac{\sigma}{|\boldsymbol{r}_i - \boldsymbol{r}_j|}\right)^6
+\right].
+\end{eqnarray}
+We adopted the Lennard Jones units by setting $\epsilon=1$ and $\sigma=1$.
+
+In terms of the Lennard Jones parameters $\epsilon$ and $\sigma$, the
+``polymer'' potential is
+\begin{eqnarray}
+U_{\rm polymer} &=&
+\sum_{i=1}^{n-1} \phi^{(1)}_{i,i+1} + \sum_{i=2}^{n-1} \phi^{(2)}_{i-1, i, i+1}
+\end{eqnarray}
+where
+
+\begin{eqnarray}
+\phi^{(1)}_{i,i+1} &=& \frac{k}{2}\left(|\boldsymbol{r}_i - \boldsymbol{r}_{i+1}|- 2^{1/6}\sigma\right)^2,\\
+\phi^{(2)}_{i-1, i, i+1} &=& \frac{k}{2}
+\left((\boldsymbol{r}_i - \boldsymbol{r}_{i-1})\cdot(\boldsymbol{r}_{i-1} - \boldsymbol{r}_{i}) - 1\right)^2,
+\end{eqnarray}
+and $k=\frac{36 \times 2^{2/3}\epsilon}{\sigma^2}$ has been chosen to match
+the curvature of $U_{\rm LJ}(\boldsymbol{r}_i, \boldsymbol{r}_j)$.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \vspace{6pt} 
@@ -360,38 +773,12 @@ All appendix sections must be cited in the main text. In the appendices, Figures
 %=====================================
 % References, variant A: external bibliography
 %=====================================
-%\externalbibliography{yes}
-%\bibliography{your_external_BibTeX_file}
+\externalbibliography{yes}
+\bibliography{references.bib/references}
 
 %=====================================
 % References, variant B: internal bibliography
 %=====================================
-\begin{thebibliography}{999}
-% Reference 1
-\bibitem[Author1(year)]{ref-journal}
-Author~1, T. The title of the cited article. {\em Journal Abbreviation} {\bf 2008}, {\em 10}, 142--149.
-% Reference 2
-\bibitem[Author2(year)]{ref-book1}
-Author~2, L. The title of the cited contribution. In {\em The Book Title}; Editor1, F., Editor2, A., Eds.; Publishing House: City, Country, 2007; pp. 32--58.
-% Reference 3
-\bibitem[Author3(year)]{ref-book2}
-Author 1, A.; Author 2, B. \textit{Book Title}, 3rd ed.; Publisher: Publisher Location, Country, 2008; pp. 154--196.
-% Reference 4
-\bibitem[Author4(year)]{ref-unpublish}
-Author 1, A.B.; Author 2, C. Title of Unpublished Work. \textit{Abbreviated Journal Name} stage of publication (under review; accepted; in~press).
-% Reference 5
-\bibitem[Author5(year)]{ref-communication}
-Author 1, A.B. (University, City, State, Country); Author 2, C. (Institute, City, State, Country). Personal communication, 2012.
-% Reference 6
-\bibitem[Author6(year)]{ref-proceeding}
-Author 1, A.B.; Author 2, C.D.; Author 3, E.F. Title of Presentation. In Title of the Collected Work (if available), Proceedings of the Name of the Conference, Location of Conference, Country, Date of Conference; Editor 1, Editor 2, Eds. (if available); Publisher: City, Country, Year (if available); Abstract Number (optional), Pagination (optional).
-% Reference 7
-\bibitem[Author7(year)]{ref-thesis}
-Author 1, A.B. Title of Thesis. Level of Thesis, Degree-Granting University, Location of University, Date of Completion.
-% Reference 8
-\bibitem[Author8(year)]{ref-url}
-Title of Site. Available online: URL (accessed on Day Month Year).
-\end{thebibliography}
 
 % If authors have biography, please use the format below
 %\section*{Short Biography of Authors}
