@@ -2,7 +2,7 @@
 %  For support, please attach all files needed for compiling as well as the log file, and specify your operating system, LaTeX version, and LaTeX editor.
 
 %=================================================================
-\documentclass[journal,article,submit,moreauthors,pdftex]{Definitions/mdpi} 
+\documentclass[entropy,article,submit,moreauthors,pdftex]{Definitions/mdpi} 
 
 % For posting an early version of this manuscript as a preprint, you may use "preprints" as the journal and change "submit" to "accept". The document class line would be, e.g., \documentclass[preprints,article,accept,moreauthors,pdftex]{mdpi}. This is especially recommended for submission to arXiv, where line numbers should be removed before posting. For preprints.org, the editorial staff will make this change immediately prior to posting.
 
@@ -47,7 +47,7 @@
 \issuenum{1}
 \articlenumber{0}
 \pubyear{2021}
-\copyrightyear{2020}
+\copyrightyear{2021}
 %\externaleditor{Academic Editor: Firstname Lastname} % For journal Automation, please change Academic Editor to "Communicated by"
 \datereceived{} 
 \dateaccepted{} 
@@ -66,36 +66,35 @@
 
 %=================================================================
 % Full title of the paper (Capitalized)
-\Title{Title}
+\Title{Forklift: An Implementation of Nested Sampling for Two Objective Functions}
 
 % MDPI internal command: Title for citation in the left column
-\TitleCitation{Title}
+\TitleCitation{Forklift}
 
 % Author Orchid ID: enter ID or remove command
 \newcommand{\orcidauthorA}{0000-0000-0000-000X} % Add \orcidA{} behind the author's name
 %\newcommand{\orcidauthorB}{0000-0000-0000-000X} % Add \orcidB{} behind the author's name
 
 % Authors, for the paper (add full first names)
-\Author{Firstname Lastname $^{1,\dagger,\ddagger}$\orcidA{}, Firstname Lastname $^{1,\ddagger}$ and Firstname Lastname $^{2,}$*}
+\Author{Brendon J. Brewer $^{1}$}
 
 % MDPI internal command: Authors, for metadata in PDF
-\AuthorNames{Firstname Lastname, Firstname Lastname and Firstname Lastname}
+\AuthorNames{Brendon Brewer}
 
 % MDPI internal command: Authors, for citation in the left column
-\AuthorCitation{Lastname, F.; Lastname, F.; Lastname, F.}
+\AuthorCitation{Brewer, B. J.}
 % If this is a Chicago style journal: Lastname, Firstname, Firstname Lastname, and Firstname Lastname.
 
 % Affiliations / Addresses (Add [1] after \address if there is only one affiliation.)
-\address{%
-$^{1}$ \quad Affiliation 1; e-mail@e-mail.com\\
-$^{2}$ \quad Affiliation 2; e-mail@e-mail.com}
+\address[1]{$^{1}$Department of Statistics, The University of Auckland,
+Private Bag 92019, Auckland 1142, New Zealand; bj.brewer@auckland.ac.nz}
 
 % Contact information of the corresponding author
-\corres{Correspondence: e-mail@e-mail.com; Tel.: (optional; include country code; if there are multiple corresponding authors, add author initials) +xx-xxxx-xxx-xxxx (F.L.)}
+%\corres{Correspondence: e-mail@e-mail.com; Tel.: (optional; include country code; if there are multiple corresponding authors, add author initials) +xx-xxxx-xxx-xxxx (F.L.)}
 
 % Current address and/or shared authorship
-\firstnote{Current address: Affiliation 3} 
-\secondnote{These authors contributed equally to this work.}
+%\firstnote{Current address: Affiliation 3} 
+%\secondnote{These authors contributed equally to this work.}
 % The commands \thirdnote{} till \eighthnote{} are available for further notes
 
 %\simplesumm{} % Simple summary
@@ -103,10 +102,13 @@ $^{2}$ \quad Affiliation 2; e-mail@e-mail.com}
 %\conference{} % An extended version of a conference paper
 
 % Abstract (Do not insert blank lines, i.e. \\) 
-\abstract{A single paragraph of about 200 words maximum. For research articles, abstracts should give a pertinent overview of the work. We strongly encourage authors to use the following style of structured abstracts, but without headings: (1) Background: place the question addressed in a broad context and highlight the purpose of the study; (2) Methods: describe briefly the main methods or treatments applied; (3) Results: summarize the article's main findings; (4) Conclusion: indicate the main conclusions or interpretations. The abstract should be an objective representation of the article, it must not contain results which are not presented and substantiated in the main text and should not exaggerate the main conclusions.}
+\abstract{I introduce {\em Forklift}, an implementation of Nested Sampling (NS)
+that broadens its applicability to problems with two objective functions.
+Such problems arise frequently in statistical mechanics, and occasionally in
+Bayesian inference.}
 
 % Keywords
-\keyword{keyword 1; keyword 2; keyword 3 (List three to ten pertinent keywords specific to the article; yet reasonably common within the subject discipline.)} 
+\keyword{nested sampling; bayesian inference; monte carlo; statistical mechanics; multi-objective optimization} 
 
 % The fields PACS, MSC, and JEL may be left empty or commented out if not applicable
 %\PACS{J0101}
@@ -115,7 +117,7 @@ $^{2}$ \quad Affiliation 2; e-mail@e-mail.com}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Only for the journal Diversity
-%\LSID{\url{http://}}
+%\LSID{\url{http://}}  %lol
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Only for the journal Applied Sciences:
