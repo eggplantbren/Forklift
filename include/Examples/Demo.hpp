@@ -14,7 +14,7 @@ namespace Examples
 class Demo
 {
     private:
-        static constexpr int size = 20;
+        static constexpr int size = 100;
         std::vector<double> params;
 
     public:
@@ -55,7 +55,7 @@ double Demo::x() const
 {
     double f = 0.0;
     for(double value: params)
-        f += -0.5*1E4*pow(value - 0.5, 2);
+        f += -1E2*pow(value - 0.5, 2);
     return f;
 }
 
@@ -63,7 +63,7 @@ double Demo::y() const
 {
     double g = 0.0;
     for(double value: params)
-        g += -1E2*value;
+        g += -pow(sin(10.0*M_PI*value), 2);
     return g;
 }
 

@@ -35,10 +35,10 @@ def _canonical_grid(limits, xs, ys, logws, num, resid):
             info = np.sum(ps*(logls - logz))
             if resid:
                 x = np.linspace(0.0, 1.0, 20001)
-                y = np.exp(-0.5*1E4*(x - 0.5)**2/Tx[j] - 1E2*x/Ty[i])
+                y = np.exp(-1E2*(x - 0.5)**2/Tx[j] - np.sin(10.0*np.pi*x)**2/Ty[i])
                 p = y/np.trapz(y, x=x)
-                logz -= 20.0*np.log(np.trapz(y, x=x))
-                info -= 20.0*np.trapz(p*np.log(p + 1E-300), x=x)
+                logz -= 100.0*np.log(np.trapz(y, x=x))
+                info -= 100.0*np.trapz(p*np.log(p + 1E-300), x=x)
             logzs_infos[0, i, j] = logz
             logzs_infos[1, i, j] = info
             logzs_infos[2, i, j] = np.sum(ps*xs)
@@ -151,12 +151,12 @@ class Results:
 
 
 results = Results()
-print(results.logz_and_info((20.0, 1.0)))
+#print(results.logz_and_info((20.0, 1.0)))
 
 results.plot_scalars()
 
 # Extent for canonical distributions
-limits = [1.0, 100.0, 1.0, 100.0]
+limits = [0.1, 100.0, 0.1, 100.0]
 num = 51
 resid = False
 logzs_infos = results.canonical_grid(limits, num, resid)
@@ -170,12 +170,20 @@ cmap = "coolwarm" if resid else "viridis"
 
 plt.figure(figsize=(8, 8))
 plt.subplot(2, 2, 1)
-plt.imshow(logzs_infos[0, :, :], extent=extent, cmap=cmap)
+vmin, vmax = None, None
+if resid:
+    vmin = -np.max(np.abs(logzs_infos[0, :, :]))
+    vmax = np.abs(vmin)
+plt.imshow(logzs_infos[0, :, :], extent=extent, cmap=cmap, vmin=vmin, vmax=vmax)
 plt.ylabel("$\\log_{10}\\left(T_y\\right)$")
 plt.title("$\\log Z$")
 
 plt.subplot(2, 2, 2)
-plt.imshow(logzs_infos[1, :, :], extent=extent, cmap=cmap)
+vmin, vmax = None, None
+if resid:
+    vmin = -np.max(np.abs(logzs_infos[1, :, :]))
+    vmax = np.abs(vmin)
+plt.imshow(logzs_infos[1, :, :], extent=extent, cmap=cmap, vmin=vmin, vmax=vmax)
 plt.title("$H$")
 
 plt.subplot(2, 2, 3)
@@ -185,7 +193,7 @@ plt.ylabel("$\\log_{10}\\left(T_y\\right)$")
 plt.title("$<f>$")
 
 plt.subplot(2, 2, 4)
-plt.imshow(logzs_infos[3, :, :], extent=extent, cmap=cmap)
+plt.imshow(logzs_infos[3, :, :], extent=extent)
 plt.xlabel("$\\log_{10}\\left(T_x\\right)$")
 plt.title("$<g>$")
 
