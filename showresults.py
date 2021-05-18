@@ -131,11 +131,15 @@ class Results:
         self.logws, self.xs, self.ys = logws, xs, ys
 
     def plot_scalars(self):
-        if len(self.xs) > 1E6:
-            print("Skipping plot because there are too many points.")
-            return
+        xs, ys = self.xs, self.ys
 
-        plt.plot(self.xs, self.ys, ".", markersize=1, alpha=0.3)
+        if len(xs) > 1E6:
+            prob = 1E6/len(xs)
+            keep = rng.rand(len(xs)) < prob
+            xs = xs[keep]
+            ys = ys[keep]
+
+        plt.plot(xs, ys, ".", markersize=2, alpha=0.3)
         plt.show()
 
     def logz_and_info(self, temperatures):
