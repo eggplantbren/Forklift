@@ -397,6 +397,19 @@ transitions. The algorithm is presented here for problems with two objective
 functions, but the implementation allows for more than two (though the
 performance is those cases is likely to be poor).
 
+\section{NS with respect to one scalar}
+Consider a simple problem where the parameter space is two dimensional,
+the prior is
+\begin{align}
+x &\sim \textnormal{Exponential}(1) \\
+y &\sim \textnormal{Exponential}(1),
+\end{align}
+and the two objective functions are also just $x$ and $y$ themselves.
+If we were to run standard Nested Sampling on this problem, targeting
+$x$, we would end up with points uniformly distributed along $x$ and
+exponentially distributed along $y$ (in a frequency sense, with very high
+prior probability).
+
 
 \section{Algorithm requirements}
 The prior $\pi(\xx)$ implies a certain prior for $L_1$ and $L_2$, which we
