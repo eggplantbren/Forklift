@@ -11,9 +11,9 @@ struct Config
     static int mcmc_steps;
     static int depth_nats;
     static double thin;
+    static int rng_seed;
     static void load(const char* filename);
 };
-
 
 } // namespace
 
