@@ -1,5 +1,5 @@
 ---
 num_particles: 30
 mcmc_steps: 1000
-depth_nats: [500, 100]
+depth_nats: [500, 500]
 thin: 0.01
