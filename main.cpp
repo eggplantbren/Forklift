@@ -9,7 +9,7 @@ int main()
 {
     Config::load("config.yaml");
     Sampler<Examples::Demo> sampler{Tools::RNG(Config::rng_seed)};
-    for(int i=0; i<Config::depth_nats; ++i)
+    for(int i=0; i<std::get<0>(Config::depth_nats); ++i)
         sampler.update();
 
     return 0;

@@ -33,7 +33,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     ++iteration;
 
     std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
-    std::cout << '/' << Config::num_particles*Config::depth_nats;
+    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
     std::cout << ':' << std::endl;
 
     // Find worst particle
