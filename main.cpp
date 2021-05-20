@@ -1,5 +1,5 @@
 #include <iostream>
-#include <Constants.h>
+#include "Config.h"
 #include <Examples/Demo.hpp>
 #include <Sampler.h>
 
@@ -7,9 +7,9 @@ using namespace Forklift;
 
 int main()
 {
+    Config::load("config.yaml");
     Sampler<Examples::Demo> sampler{Tools::RNG()};
-
-    for(int i=0; i<Constants::depth_nats; ++i)
+    for(int i=0; i<Config::depth_nats; ++i)
         sampler.update();
 
     return 0;

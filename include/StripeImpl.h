@@ -1,7 +1,7 @@
 #ifndef Forklift_StripeImpl_h
 #define Forklift_StripeImpl_h
 
-#include <Constants.h>
+#include "Config.h"
 #include <iostream>
 #include <Tools/Misc.hpp>
 
@@ -33,7 +33,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     ++iteration;
 
     std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
-    std::cout << '/' << Constants::num_particles*Constants::depth_nats;
+    std::cout << '/' << Config::num_particles*Config::depth_nats;
     std::cout << ':' << std::endl;
 
     // Find worst particle
@@ -46,7 +46,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 
     // Save worst particle
     std::optional<std::vector<unsigned char>> bytes;
-    if(rng.rand() <= Constants::thin)
+    if(rng.rand() <= Config::thin)
         bytes = particles[worst].to_bytes();
 
     database.save_particle(stripe_id, iteration, bytes,
@@ -81,7 +81,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     int& k = worst;
 
     int accepted = 0;
-    for(int i=0; i<Constants::mcmc_steps; ++i)
+    for(int i=0; i<Config::mcmc_steps; ++i)
     {
         M proposal = particles[k];
         double logh = proposal.perturb(rng);
@@ -101,7 +101,7 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     }
 
     std::cout << "done. ";
-    std::cout << "Accepted " << accepted << '/' << Constants::mcmc_steps << ' ';
+    std::cout << "Accepted " << accepted << '/' << Config::mcmc_steps << ' ';
     std::cout << "proposals.\n" << std::endl;
 }
 

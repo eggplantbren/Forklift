@@ -1,7 +1,7 @@
 #ifndef Forklift_SamplerImpl_h
 #define Forklift_SamplerImpl_h
 
-#include "Constants.h"
+#include "Config.h"
 #include <iostream>
 #include <Tools/Misc.hpp>
 
@@ -17,10 +17,10 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
 {
     std::cout << "Generating particles from the prior..." << std::flush;
 
-    particles.reserve(Constants::num_particles);
-    xs.reserve(Constants::num_particles);
-    ys.reserve(Constants::num_particles);
-    for(int i=0; i<Constants::num_particles; ++i)
+    particles.reserve(Config::num_particles);
+    xs.reserve(Config::num_particles);
+    ys.reserve(Config::num_particles);
+    for(int i=0; i<Config::num_particles; ++i)
     {
         M m{rng};
         xs.emplace_back(m.x(), rng);
@@ -37,14 +37,13 @@ void Sampler<M>::update()
 {
     // Create stripe and ascend
     Stripe<M> stripe(stripe_id, particles, xs, ys, xstar);
-    int stripe_iterations = Constants::num_particles
-                                        *(Constants::depth_nats - 0); //stripe_id);
+    int stripe_iterations = Config::num_particles*Config::depth_nats;
     for(int i=0; i<stripe_iterations; ++i)
         stripe.ns_iteration(database, rng);
 
     ++stripe_id;
 
-    for(int i=0; i<Constants::num_particles; ++i)
+    for(int i=0; i<Config::num_particles; ++i)
         ns_iteration();
 
     // Clear out particles
@@ -94,7 +93,7 @@ void Sampler<M>::ns_iteration()
     int& k = worst;
 
     int accepted = 0;
-    for(int i=0; i<Constants::mcmc_steps; ++i)
+    for(int i=0; i<Config::mcmc_steps; ++i)
     {
         M proposal = particles[k];
         double logh = proposal.perturb(rng);
@@ -114,7 +113,7 @@ void Sampler<M>::ns_iteration()
     }
 
     std::cout << "done. ";
-    std::cout << "Accepted " << accepted << '/' << Constants::mcmc_steps << ' ';
+    std::cout << "Accepted " << accepted << '/' << Config::mcmc_steps << ' ';
     std::cout << "proposals.\n" << std::endl;
 }
 

@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS constants\n\
  mcmc_steps    INTEGER NOT NULL);";
 
     db << "INSERT OR IGNORE INTO constants VALUES (1, ?, ?);"
-       << Constants::num_particles << Constants::mcmc_steps;
+       << Config::num_particles << Config::mcmc_steps;
 
 
     db << "\n\
