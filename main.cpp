@@ -1,6 +1,6 @@
 #include <iostream>
 #include "Config.h"
-#include <Examples/Demo.hpp>
+#include <Examples/All.hpp>
 #include <Sampler.h>
 
 using namespace Forklift;
