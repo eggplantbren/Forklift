@@ -2,4 +2,5 @@
 num_particles: 30
 mcmc_steps: 1000
 depth_nats: [500, 500]
+# rng_seed: 1234
 thin: 0.01
