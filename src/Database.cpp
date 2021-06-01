@@ -62,10 +62,13 @@ CREATE TABLE IF NOT EXISTS particles\n\
  y         REAL NOT NULL,\n\
  xtb       REAL NOT NULL,\n\
  ytb       REAL NOT NULL,\n\
+ include   BOOLEAN NOT NULL,\n\
  PRIMARY KEY (stripe_id, iteration))\n\
 WITHOUT ROWID;";
 
-    db << "CREATE INDEX IF NOT EXISTS stripe_id_idx ON particles (stripe_id);";
+    db << "CREATE INDEX IF NOT EXISTS x_idx ON particles (x, xtb);";
+    db << "CREATE INDEX IF NOT EXISTS x_idx ON particles (x, xtb);";
+    db << "CREATE INDEX IF NOT EXISTS include_stripe_idx ON particles (include, stripe_id, iteration, x, y);";
 }
 
 int Database::save_particle
@@ -73,10 +76,11 @@ int Database::save_particle
      const std::optional<std::vector<unsigned char>>& bytes,
      const Double& x, const Double& y)
 {
-    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?);"
+    db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
        << stripe_id << iteration
        << bytes << x.get_value() << y.get_value()
-       << x.get_tiebreaker() << y.get_tiebreaker();
+       << x.get_tiebreaker() << y.get_tiebreaker()
+       << true;
 
     int id;
     db << "SELECT LAST_INSERT_ROWID();" >> id;
@@ -87,7 +91,7 @@ int Database::save_particle
 
 void Database::clear_above(const Double& xstar)
 {
-    db << "DELETE FROM particles WHERE (x, xtb) >= (?, ?);"
+    db << "UPDATE particles SET include = 0 WHERE (x, xtb) >= (?, ?);"
        << xstar.get_value() << xstar.get_tiebreaker();
 }
 

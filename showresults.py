@@ -84,7 +84,7 @@ class Results:
 
     def load_scalars(self):
         print("Getting particle counts...", flush=True, end="")
-        size = self.db.execute("SELECT COUNT(*) FROM particles;")\
+        size = self.db.execute("SELECT COUNT(*) FROM particles WHERE include = 1;")\
                                 .fetchone()[0]
         thin = 1.0
         if size > MAX_LOAD_SIZE:
@@ -104,7 +104,7 @@ class Results:
             data = []
             for row in self.db2.execute("SELECT iteration, x, y\
                                      FROM particles\
-                                     WHERE stripe_id = ?;",
+                                     WHERE include = 1 AND stripe_id = ?;",
                                     (stripe_id, )):
                 if thin >= 1.0 or rng.rand() <= thin:
                     data.append(row)
