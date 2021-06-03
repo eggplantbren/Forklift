@@ -4,6 +4,8 @@
 namespace Forklift
 {
 
+std::mutex Database::write_mutex;
+
 Database::Database()
 :db(filename)
 {
@@ -76,6 +78,8 @@ int Database::save_particle
      const std::optional<std::vector<unsigned char>>& bytes,
      const Double& x, const Double& y)
 {
+
+    write_mutex.lock();
     db << "INSERT INTO particles VALUES (?, ?, ?, ?, ?, ?, ?, ?);"
        << stripe_id << iteration
        << bytes << x.get_value() << y.get_value()
@@ -84,6 +88,7 @@ int Database::save_particle
 
     int id;
     db << "SELECT LAST_INSERT_ROWID();" >> id;
+    write_mutex.unlock();
 
     return id;
 }

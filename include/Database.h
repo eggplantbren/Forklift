@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include "Double.h"
+#include <mutex>
 #include <optional>
 #include <sqlite_modern_cpp/hdr/sqlite_modern_cpp.h>
 #include <vector>
@@ -14,6 +15,8 @@ class Database
 {
     private:
         static constexpr auto filename = "output/forklift.db";
+        static std::mutex write_mutex; // Only used in save_particle
+
         sqlite::database db;
 
         void begin();

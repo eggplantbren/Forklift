@@ -22,6 +22,7 @@ Sampler<M>::Sampler()
         rngs.emplace_back(seed);
         seed += 123;
     }
+    stripes.reserve(Config::num_threads);
     std::cout << "done." << std::endl;
 
     std::cout << "Generating particles from the prior..." << std::flush;
@@ -42,15 +43,40 @@ Sampler<M>::Sampler()
 
 
 template<Model M>
+void Sampler<M>::run_stripe(int t, int iterations)
+{
+    for(int i=0; i<iterations; ++i)
+        stripes[t].ns_iteration(database, rngs[t]);
+}
+
+template<Model M>
 void Sampler<M>::update()
 {
-    // Create stripe and ascend
-    Stripe<M> stripe(stripe_id, particles, xs, ys, xstar);
-    int stripe_iterations = Config::num_particles*std::get<1>(Config::depth_nats);
-    for(int i=0; i<stripe_iterations; ++i)
-        stripe.ns_iteration(database, rngs[0]);
-
+    // Create new stripe, ready to go
+    stripes.emplace_back(stripe_id, particles, xs, ys, xstar);
     ++stripe_id;
+
+    if(int(stripes.size()) == Config::num_threads)
+    {
+        // Run stripes
+        int stripe_iterations = Config::num_particles
+                                    * std::get<1>(Config::depth_nats);
+
+        std::vector<std::thread> threads;
+        threads.reserve(Config::num_threads);
+        for(int i=0; i<Config::num_threads; ++i)
+        {
+            auto func = std::bind(&Sampler<M>::run_stripe, *this, i,
+                                    stripe_iterations);
+            threads.emplace_back(func);
+        }
+
+        for(auto& thread: threads)
+            thread.join();
+
+        // Clear stripes
+        stripes.clear();
+    }
 
     for(int i=0; i<Config::num_particles; ++i)
         ns_iteration();

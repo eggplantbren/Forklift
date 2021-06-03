@@ -7,6 +7,7 @@
 #include <Double.h>
 #include <Model.h>
 #include <Stripe.h>
+#include <thread>
 #include <tuple>
 
 namespace Forklift
@@ -26,6 +27,12 @@ class Sampler
         // Particles with their scalars
         std::vector<M> particles;
         std::vector<Double> xs, ys;
+
+        // Stripes
+        std::vector<Stripe<M>> stripes;
+
+        // Run stripe on thread t
+        void run_stripe(int t, int iterations);
 
         // Iteration counter
         int stripe_id, iteration;

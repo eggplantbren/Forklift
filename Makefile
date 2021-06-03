@@ -7,6 +7,6 @@ default:
 	$(CXX) $(FLAGS) -c src/Double.cpp
 	ar rcs libforklift.a *.o
 	$(CXX) $(FLAGS) -c main.cpp
-	$(CXX) -L . -o main main.o -lforklift -lsqlite3 -lyaml-cpp
+	$(CXX) -L . -o main main.o -lforklift -lpthread -lsqlite3 -lyaml-cpp
 	rm -f *.o
 
