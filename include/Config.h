@@ -14,6 +14,7 @@ struct Config
     static std::pair<int, int> depth_nats;
     static double thin;
     static int rng_seed;
+    static int num_threads;
     static void load(const char* filename);
 };
 

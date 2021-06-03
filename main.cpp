@@ -8,7 +8,7 @@ using namespace Forklift;
 int main()
 {
     Config::load("config.yaml");
-    Sampler<Examples::Demo> sampler{Tools::RNG(Config::rng_seed)};
+    Sampler<Examples::Demo> sampler;
     for(int i=0; i<std::get<0>(Config::depth_nats); ++i)
         sampler.update();
 

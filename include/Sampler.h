@@ -1,6 +1,8 @@
 #ifndef Forklift_Sampler_h
 #define Forklift_Sampler_h
 
+#include <ctime>
+#include <Config.h>
 #include <Database.h>
 #include <Double.h>
 #include <Model.h>
@@ -19,7 +21,7 @@ class Sampler
         Database database;
 
         // Random number generator
-        Tools::RNG rng;
+        std::vector<Tools::RNG> rngs;
 
         // Particles with their scalars
         std::vector<M> particles;
@@ -36,9 +38,7 @@ class Sampler
 
     public:
 
-        // Construct with a random number generator
-        Sampler(Tools::RNG&& _rng);
-        Sampler() = delete;
+        Sampler();
 
         // Private functions
         void update();

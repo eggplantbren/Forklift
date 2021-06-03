@@ -9,12 +9,21 @@ namespace Forklift
 {
 
 template<Model M>
-Sampler<M>::Sampler(Tools::RNG&& _rng)
-:rng(_rng)
-,stripe_id(0)
+Sampler<M>::Sampler()
+:stripe_id(0)
 ,iteration(0)
 ,xstar(Tools::minus_infinity, 0.0)
 {
+    std::cout << "Setting up RNGs..." << std::flush;
+    rngs.reserve(Config::num_threads);
+    int seed = time(0);
+    for(int i=0; i<Config::num_threads; ++i)
+    {
+        rngs.emplace_back(seed);
+        seed += 123;
+    }
+    std::cout << "done." << std::endl;
+
     std::cout << "Generating particles from the prior..." << std::flush;
 
     particles.reserve(Config::num_particles);
@@ -22,9 +31,9 @@ Sampler<M>::Sampler(Tools::RNG&& _rng)
     ys.reserve(Config::num_particles);
     for(int i=0; i<Config::num_particles; ++i)
     {
-        M m{rng};
-        xs.emplace_back(m.x(), rng);
-        ys.emplace_back(m.y(), rng);
+        M m{rngs[0]};
+        xs.emplace_back(m.x(), rngs[0]);
+        ys.emplace_back(m.y(), rngs[0]);
         particles.emplace_back(std::move(m));
     }
 
@@ -39,7 +48,7 @@ void Sampler<M>::update()
     Stripe<M> stripe(stripe_id, particles, xs, ys, xstar);
     int stripe_iterations = Config::num_particles*std::get<1>(Config::depth_nats);
     for(int i=0; i<stripe_iterations; ++i)
-        stripe.ns_iteration(database, rng);
+        stripe.ns_iteration(database, rngs[0]);
 
     ++stripe_id;
 
@@ -79,7 +88,7 @@ void Sampler<M>::ns_iteration()
         int copy;
         while(true)
         {
-            copy = rng.rand_int(particles.size());
+            copy = rngs[0].rand_int(particles.size());
             if(copy != worst)
                 break;
         }
@@ -96,12 +105,12 @@ void Sampler<M>::ns_iteration()
     for(int i=0; i<Config::mcmc_steps; ++i)
     {
         M proposal = particles[k];
-        double logh = proposal.perturb(rng);
+        double logh = proposal.perturb(rngs[0]);
 
-        if(rng.rand() <= exp(logh))
+        if(rngs[0].rand() <= exp(logh))
         {
-            Double x = {proposal.x(), xs[k].get_tiebreaker(), rng};
-            Double y = {proposal.y(), ys[k].get_tiebreaker(), rng};
+            Double x = {proposal.x(), xs[k].get_tiebreaker(), rngs[0]};
+            Double y = {proposal.y(), ys[k].get_tiebreaker(), rngs[0]};
             if(x >= xstar)
             {
                 particles[k] = proposal;

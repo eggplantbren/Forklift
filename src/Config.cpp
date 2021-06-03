@@ -9,6 +9,7 @@ int Config::mcmc_steps = 1000;
 std::pair<int, int> Config::depth_nats = {100, 100};
 double Config::thin = 0.1;
 int Config::rng_seed = 0;
+int Config::num_threads = 4;
 
 void Config::load(const char* filename)
 {
@@ -27,6 +28,8 @@ void Config::load(const char* filename)
     {
         rng_seed = time(0);
     }
+
+    num_threads = node["num_threads"].as<int>();
 }
 
 } // namespace
