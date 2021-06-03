@@ -9,6 +9,9 @@ namespace Forklift
 {
 
 template<Model M>
+std::mutex Stripe<M>::stdout_mutex;
+
+template<Model M>
 Stripe<M>::Stripe
     (int _stripe_id,
      const std::vector<M>& _particles,
@@ -23,20 +26,16 @@ Stripe<M>::Stripe
 ,ystar{Tools::minus_infinity, 0.0}
 ,iteration(0)
 {
+    stdout_mutex.lock();
     std::cout << "Initialising stripe " << stripe_id << ' ';
     std::cout << "with threshold " << xstar.get_value() << '.' << std::endl;
+    stdout_mutex.unlock();
 }
 
 template<Model M>
 void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 {
     ++iteration;
-
-    std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
-    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
-    std::cout << " (depth ~= " << double(iteration)/Config::num_particles
-              << " nats)";
-    std::cout << ':' << std::endl;
 
     // Find worst particle
     int worst = 0;
@@ -57,11 +56,17 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
     // Update threshold
     ystar = ys[worst];
 
+    stdout_mutex.lock();
+    std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
+    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
+    std::cout << " (depth ~= " << double(iteration)/Config::num_particles
+              << " nats)";
+    std::cout << ':' << std::endl;
+
     std::cout << "Saved particle. Threshold updated to (";
     std::cout << xstar.get_value() << ", " << ystar.get_value();
-    std::cout << ")." << std::endl;
-
-    std::cout << "Replacing particle..." << std::flush;
+    std::cout << ").\n" << std::endl;
+    stdout_mutex.unlock();
 
     // Clone survivor
     if(particles.size() > 1)
@@ -102,9 +107,15 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
         }
     }
 
-    std::cout << "done. ";
+    stdout_mutex.lock();
+    std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
+    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
+    std::cout << " (depth ~= " << double(iteration)/Config::num_particles
+              << " nats)";
+    std::cout << ":\n";
     std::cout << "Accepted " << accepted << '/' << Config::mcmc_steps << ' ';
     std::cout << "proposals.\n" << std::endl;
+    stdout_mutex.unlock();
 }
 
 } // namespace

@@ -4,6 +4,7 @@
 #include "Database.h"
 #include "Double.h"
 #include "Model.h"
+#include <mutex>
 #include <Tools/RNG.hpp>
 #include <vector>
 
@@ -14,6 +15,9 @@ template<Model M>
 class Stripe
 {
     private:
+
+        // For cout
+        static std::mutex stdout_mutex;
 
         // Stripe number
         int stripe_id;
