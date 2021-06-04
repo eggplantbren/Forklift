@@ -9,7 +9,8 @@ namespace Forklift
 // A singleton
 struct Config
 {
-    static int num_particles;
+    static int num_particles_floor;
+    static int num_particles_stripe;
     static int mcmc_steps;
     static std::pair<int, int> depth_nats;
     static double thin;

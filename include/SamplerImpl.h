@@ -27,10 +27,10 @@ Sampler<M>::Sampler()
 
     std::cout << "Generating particles from the prior..." << std::flush;
 
-    particles.reserve(Config::num_particles);
-    xs.reserve(Config::num_particles);
-    ys.reserve(Config::num_particles);
-    for(int i=0; i<Config::num_particles; ++i)
+    particles.reserve(Config::num_particles_floor);
+    xs.reserve(Config::num_particles_floor);
+    ys.reserve(Config::num_particles_floor);
+    for(int i=0; i<Config::num_particles_floor; ++i)
     {
         M m{rngs[0]};
         xs.emplace_back(m.x(), rngs[0]);
@@ -59,7 +59,7 @@ void Sampler<M>::update()
     if(int(stripes.size()) == Config::num_threads)
     {
         // Run stripes
-        int stripe_iterations = Config::num_particles
+        int stripe_iterations = Config::num_particles_stripe
                                     * std::get<1>(Config::depth_nats);
 
         std::vector<std::thread> threads;
@@ -78,7 +78,7 @@ void Sampler<M>::update()
         stripes.clear();
     }
 
-    for(int i=0; i<Config::num_particles; ++i)
+    for(int i=0; i<Config::num_particles_floor; ++i)
         ns_iteration();
 
     // Clear out particles
@@ -92,7 +92,8 @@ void Sampler<M>::ns_iteration()
 {
     ++iteration;
 
-    std::cout << "Floor iteration " << iteration << '.' << std::endl;
+    std::cout << "Floor iteration " << iteration << " (depth ~= ";
+    std::cout << double(iteration)/Config::num_particles_floor << " nats:\n";
 
     // Find worst particle
     int worst = 0;

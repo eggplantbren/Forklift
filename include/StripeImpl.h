@@ -19,9 +19,6 @@ Stripe<M>::Stripe
      const std::vector<Double>& _ys,
      const Double& _xstar)
 :stripe_id(_stripe_id)
-,particles(_particles)
-,xs(_xs)
-,ys(_ys)
 ,xstar(_xstar)
 ,ystar{Tools::minus_infinity, 0.0}
 ,iteration(0)
@@ -30,6 +27,16 @@ Stripe<M>::Stripe
     std::cout << "Initialising stripe " << stripe_id << ' ';
     std::cout << "with threshold " << xstar.get_value() << '.' << std::endl;
     stdout_mutex.unlock();
+
+    particles.reserve(Config::num_particles_stripe);
+    xs.reserve(Config::num_particles_stripe);
+    ys.reserve(Config::num_particles_stripe);
+    for(int i=0; i<Config::num_particles_stripe; ++i)
+    {
+        particles.emplace_back(_particles[i]);
+        xs.emplace_back(_xs[i]);
+        ys.emplace_back(_ys[i]);
+    }
 }
 
 template<Model M>
@@ -58,8 +65,8 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 
     stdout_mutex.lock();
     std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
-    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
-    std::cout << " (depth ~= " << double(iteration)/Config::num_particles
+    std::cout << '/' << Config::num_particles_stripe*std::get<1>(Config::depth_nats);
+    std::cout << " (depth ~= " << double(iteration)/Config::num_particles_stripe
               << " nats)";
     std::cout << ':' << std::endl;
 
@@ -109,8 +116,8 @@ void Stripe<M>::ns_iteration(Database& database, Tools::RNG& rng)
 
     stdout_mutex.lock();
     std::cout << "Stripe " << stripe_id << ", iteration " << iteration;
-    std::cout << '/' << Config::num_particles*std::get<1>(Config::depth_nats);
-    std::cout << " (depth ~= " << double(iteration)/Config::num_particles
+    std::cout << '/' << Config::num_particles_stripe*std::get<1>(Config::depth_nats);
+    std::cout << " (depth ~= " << double(iteration)/Config::num_particles_stripe
               << " nats)";
     std::cout << ":\n";
     std::cout << "Accepted " << accepted << '/' << Config::mcmc_steps << ' ';

@@ -90,7 +90,7 @@ class Results:
         if size > MAX_LOAD_SIZE:
             thin = MAX_LOAD_SIZE / size
 
-        self.num_particles = self.db.execute("SELECT num_particles\
+        self.num_particles = self.db.execute("SELECT num_particles_stripe\
                                               FROM constants;")\
                                                 .fetchone()[0]
         print("done.", flush=True)
@@ -162,7 +162,7 @@ results.plot_scalars()
 # Extent for canonical distributions
 limits = [0.1, 100.0, 0.1, 100.0]
 num = 51
-resid = False
+resid = True
 logzs_infos = results.canonical_grid(limits, num, resid)
 
 # Extent for plotting

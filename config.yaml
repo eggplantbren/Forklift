@@ -1,7 +1,8 @@
 ---
-num_particles: 20
+num_particles_floor: 100
+num_particles_stripe: 10
 mcmc_steps: 1000
 depth_nats: [500, 500]
 # rng_seed: 1234
 thin: 0.01
-num_threads: 4
+num_threads: 10

@@ -47,13 +47,16 @@ void Database::create_tables()
 {
     db << "\n\
 CREATE TABLE IF NOT EXISTS constants\n\
-(id            INTEGER NOT NULL PRIMARY KEY,\n\
- num_particles INTEGER NOT NULL,\n\
- mcmc_steps    INTEGER NOT NULL,\n\
- rng_seed      INTEGER NOT NULL);";
+(id                   INTEGER NOT NULL PRIMARY KEY,\n\
+ num_particles_floor  INTEGER NOT NULL,\n\
+ num_particles_stripe INTEGER NOT NULL,\n\
+ mcmc_steps           INTEGER NOT NULL,\n\
+ rng_seed             INTEGER NOT NULL,\n\
+ num_threads          INTEGER NOT NULL);";
 
-    db << "INSERT OR IGNORE INTO constants VALUES (1, ?, ?, ?);"
-       << Config::num_particles << Config::mcmc_steps << Config::rng_seed;
+    db << "INSERT OR IGNORE INTO constants VALUES (1, ?, ?, ?, ?, ?);"
+       << Config::num_particles_floor << Config::num_particles_stripe
+       << Config::mcmc_steps << Config::rng_seed << Config::num_threads;
 
     db << "\n\
 CREATE TABLE IF NOT EXISTS particles\n\
